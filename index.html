@@ -7904,44 +7904,55 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharAvisoS
 </style>
 
 
-<!-- AVISO REMOTO BARUKI: LINK 11 (pausa a navegação enquanto a imagem estiver disponível) -->
+<!-- AVISO REMOTO BARUKI: imagem atualizada silenciosamente a cada 5 segundos -->
 <style id="baruki-aviso-remoto-style">
-#barukiAvisoRemoto{position:fixed;inset:0;z-index:1000005;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.82);overscroll-behavior:contain;touch-action:none;}
+#barukiAvisoRemoto{position:fixed;inset:0;z-index:1000005;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.82);overscroll-behavior:contain;}
 #barukiAvisoRemoto.ativo{display:flex;}
-#barukiAvisoRemoto .baruki-aviso-conteudo{position:relative;max-width:min(94vw,760px);max-height:90vh;pointer-events:none;}
-#barukiAvisoRemoto .baruki-aviso-mensagem{display:block;margin:0;padding:28px 34px;max-width:90vw;border:3px solid #fff;border-radius:16px;background:#c90016;color:#fff;text-align:center;font-size:clamp(28px,7vw,54px);font-weight:1000;letter-spacing:1px;line-height:1.15;box-shadow:0 12px 45px rgba(0,0,0,.5);text-shadow:0 2px 4px #600;}
+#barukiAvisoRemoto .baruki-aviso-conteudo{position:relative;max-width:min(94vw,760px);max-height:90vh;display:flex;align-items:center;justify-content:center;}
+#barukiAvisoRemoto .baruki-aviso-imagem{display:block;max-width:100%;max-height:85vh;width:auto;height:auto;object-fit:contain;border-radius:12px;box-shadow:0 12px 45px rgba(0,0,0,.5)}
+#barukiAvisoRemoto .baruki-aviso-fechar{position:absolute;top:-13px;right:-13px;z-index:2;width:38px;height:38px;border:2px solid #fff;border-radius:50%;background:#d71920;color:#fff;font-size:27px;font-weight:900;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 12px #0008}
 </style>
-<div id="barukiAvisoRemoto" role="dialog" aria-modal="true" aria-label="Aviso da Lanchonete Baruki" aria-live="assertive">
+<div id="barukiAvisoRemoto" role="dialog" aria-modal="true" aria-label="Aviso da Lanchonete Baruki">
   <div class="baruki-aviso-conteudo">
-    <div class="baruki-aviso-mensagem">EM MANUTENÇÃO</div>
+    <button class="baruki-aviso-fechar" type="button" aria-label="Fechar aviso" onclick="fecharAvisoRemoto()">×</button>
+    <img id="barukiAvisoRemotoImagem" class="baruki-aviso-imagem" alt="Aviso da Lanchonete Baruki">
   </div>
 </div>
 <script id="baruki-aviso-remoto-script">
 (function(){
   const aviso=document.getElementById('barukiAvisoRemoto');
-  if(!aviso)return;
-  const link11='https://www.socialcreator.com/srv/imgs/seccs/335079_ico.png?ts=1793938611';
+  const imagem=document.getElementById('barukiAvisoRemotoImagem');
+  if(!aviso||!imagem)return;
+  const linkAviso='https://www.socialcreator.com/srv/imgs/seccs/335022_ico.png?ts=1794001406';
   let verificando=false;
-  const overflowOriginal=document.body.style.overflow;
-  function pausarNavegacao(){
-    aviso.classList.add('ativo');
-    document.body.style.overflow='hidden';
-    document.documentElement.style.overflow='hidden';
-  }
-  function liberarNavegacao(){
+  let fechadoPeloUsuario=false;
+  let imagemCarregada=false;
+  window.fecharAvisoRemoto=function(){
+    fechadoPeloUsuario=true;
     aviso.classList.remove('ativo');
-    document.body.style.overflow=overflowOriginal;
+    document.body.style.overflow='';
     document.documentElement.style.overflow='';
-  }
+  };
   function verificarAviso(){
     if(verificando||document.hidden)return;
     verificando=true;
-    const separador=link11.includes('?')?'&':'?';
-    const urlAtualizada=link11+separador+'_baruki_aviso_check='+Date.now();
     const teste=new Image();
-    teste.onload=function(){pausarNavegacao();verificando=false;};
-    teste.onerror=function(){liberarNavegacao();verificando=false;};
-    teste.src=urlAtualizada;
+    teste.onload=function(){
+      // Só substitui a imagem atual depois que a nova imagem foi carregada com sucesso.
+      imagem.src=teste.src;
+      imagemCarregada=true;
+      if(!fechadoPeloUsuario){
+        aviso.classList.add('ativo');
+        document.body.style.overflow='hidden';
+        document.documentElement.style.overflow='hidden';
+      }
+      verificando=false;
+    };
+    teste.onerror=function(){
+      // Se o endereço não retornar uma imagem válida, mantém o aviso/imagem atual sem alterações.
+      verificando=false;
+    };
+    teste.src=linkAviso+(linkAviso.includes('?')?'&':'?')+'_baruki_aviso_check='+Date.now();
   }
   document.addEventListener('visibilitychange',function(){if(!document.hidden)verificarAviso();});
   verificarAviso();
