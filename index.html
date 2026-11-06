@@ -4186,10 +4186,37 @@ function renderCategories(){
     pizzas: 'https://www.socialcreator.com/srv/imgs/seccs/335024_ico.png?ts=1793765971',
     cachorro: 'https://www.socialcreator.com/srv/imgs/seccs/335029_ico.png?ts=1793766423',
   };
-  document.getElementById('categories').innerHTML=categories.map(c=>
-    '<button type="button" class="cat '+(c[0]===currentCategory?'active':'')+'" onclick="selectCategory(\''+c[0]+'\')">'+
-    '<img class="category-image" src="'+categoryImages[c[0]]+'" alt="" loading="eager"><span class="category-label">'+c[1].replace(/^[^ ]+\s/,'')+'</span></button>'
-  ).join('');
+  document.getElementById('categories').innerHTML=categories.map(c=>{
+    const imageUrl=categoryImages[c[0]]||'';
+    const freshImageUrl=imageUrl ? imageUrl+(imageUrl.includes('?')?'&':'?')+'baruki_refresh='+Date.now() : '';
+    return '<button type="button" class="cat '+(c[0]===currentCategory?'active':'')+'" onclick="selectCategory(\''+c[0]+'\')">'+
+    '<img class="category-image" data-original-src="'+imageUrl+'" src="'+freshImageUrl+'" alt="" loading="eager"><span class="category-label">'+c[1].replace(/^[^ ]+\s/,'')+'</span></button>';
+  }).join('');
+}
+
+// Confere as imagens das categorias a cada 5 segundos e troca a exibida
+// somente depois que a nova versão do endereço remoto terminar de carregar.
+function refreshCategoryImages(){
+  if(document.hidden)return;
+  document.querySelectorAll('#categories .category-image[data-original-src]').forEach(function(img){
+    if(img.dataset.refreshing==='1')return;
+    const originalUrl=img.dataset.originalSrc;
+    if(!originalUrl)return;
+    img.dataset.refreshing='1';
+    const separator=originalUrl.includes('?')?'&':'?';
+    const freshUrl=originalUrl+separator+'baruki_live_refresh='+Date.now();
+    const probe=new Image();
+    probe.onload=function(){
+      if(img.isConnected)img.src=freshUrl;
+      img.dataset.refreshing='0';
+    };
+    probe.onerror=function(){img.dataset.refreshing='0';};
+    probe.src=freshUrl;
+  });
+}
+
+if(!window.barukiCategoryImageRefreshTimer){
+  window.barukiCategoryImageRefreshTimer=setInterval(refreshCategoryImages,5000);
 }
 
 function selectCategory(cat){
@@ -7865,47 +7892,43 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharAvisoS
 </style>
 
 
-<!-- AVISO REMOTO BARUKI: LINK 11 (bloco independente; não altera status nem banners) -->
+<!-- AVISO REMOTO BARUKI: LINK 11 (pausa a navegação enquanto a imagem estiver disponível) -->
 <style id="baruki-aviso-remoto-style">
-#barukiAvisoRemoto{position:fixed;inset:0;z-index:1000005;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);}
+#barukiAvisoRemoto{position:fixed;inset:0;z-index:1000005;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.82);overscroll-behavior:contain;touch-action:none;}
 #barukiAvisoRemoto.ativo{display:flex;}
-#barukiAvisoRemoto .baruki-aviso-conteudo{position:relative;max-width:min(94vw,760px);max-height:90vh;}
-#barukiAvisoRemoto img{display:block;max-width:94vw;max-height:88vh;width:auto;height:auto;object-fit:contain;border-radius:12px;box-shadow:0 12px 45px rgba(0,0,0,.5);}
-#barukiAvisoRemoto .baruki-aviso-fechar{position:absolute;right:-12px;top:-12px;width:38px;height:38px;border:2px solid #fff;border-radius:50%;background:#e32636;color:#fff;font-size:27px;font-weight:900;line-height:30px;cursor:pointer;box-shadow:0 3px 12px #0008;}
+#barukiAvisoRemoto .baruki-aviso-conteudo{position:relative;max-width:min(94vw,760px);max-height:90vh;pointer-events:none;}
+#barukiAvisoRemoto .baruki-aviso-mensagem{display:block;margin:0;padding:28px 34px;max-width:90vw;border:3px solid #fff;border-radius:16px;background:#c90016;color:#fff;text-align:center;font-size:clamp(28px,7vw,54px);font-weight:1000;letter-spacing:1px;line-height:1.15;box-shadow:0 12px 45px rgba(0,0,0,.5);text-shadow:0 2px 4px #600;}
 </style>
-<div id="barukiAvisoRemoto" aria-label="Aviso da Lanchonete Baruki" aria-live="polite">
+<div id="barukiAvisoRemoto" role="dialog" aria-modal="true" aria-label="Aviso da Lanchonete Baruki" aria-live="assertive">
   <div class="baruki-aviso-conteudo">
-    <button class="baruki-aviso-fechar" type="button" aria-label="Fechar aviso">×</button>
-    <img id="barukiAvisoRemotoImagem" alt="Aviso da Lanchonete Baruki">
+    <div class="baruki-aviso-mensagem">EM MANUTENÇÃO</div>
   </div>
 </div>
 <script id="baruki-aviso-remoto-script">
 (function(){
   const aviso=document.getElementById('barukiAvisoRemoto');
-  const imagem=document.getElementById('barukiAvisoRemotoImagem');
-  const fechar=aviso&&aviso.querySelector('.baruki-aviso-fechar');
-  if(!aviso||!imagem||!fechar)return;
-  const link11='https://www.socialcreator.com/srv/imgs/seccs/335022_ico.png?ts=1793764073';
-  let fechado=false, verificando=false, linkDisponivel=false;
-  fechar.addEventListener('click',function(){fechado=true;aviso.classList.remove('ativo');});
-  async function verificarAviso(){
+  if(!aviso)return;
+  const link11='https://www.socialcreator.com/srv/imgs/seccs/335079_ico.png?ts=1793938611';
+  let verificando=false;
+  const overflowOriginal=document.body.style.overflow;
+  function pausarNavegacao(){
+    aviso.classList.add('ativo');
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
+  }
+  function liberarNavegacao(){
+    aviso.classList.remove('ativo');
+    document.body.style.overflow=overflowOriginal;
+    document.documentElement.style.overflow='';
+  }
+  function verificarAviso(){
     if(verificando||document.hidden)return;
     verificando=true;
     const separador=link11.includes('?')?'&':'?';
     const urlAtualizada=link11+separador+'_baruki_aviso_check='+Date.now();
     const teste=new Image();
-    teste.onload=function(){
-      linkDisponivel=true;
-      if(!fechado){imagem.src=urlAtualizada;aviso.classList.add('ativo');}
-      verificando=false;
-    };
-    teste.onerror=function(){
-      linkDisponivel=false;
-      fechado=false;
-      aviso.classList.remove('ativo');
-      imagem.removeAttribute('src');
-      verificando=false;
-    };
+    teste.onload=function(){pausarNavegacao();verificando=false;};
+    teste.onerror=function(){liberarNavegacao();verificando=false;};
     teste.src=urlAtualizada;
   }
   document.addEventListener('visibilitychange',function(){if(!document.hidden)verificarAviso();});
