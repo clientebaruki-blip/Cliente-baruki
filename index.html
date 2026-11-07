@@ -1884,7 +1884,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   <div class="brand">LANCHONETE <span>BARUKI</span></div>
   <div class="sub"><span class="order-message"><span class="order-pulse">📲</span> <span class="order-line">FAÇA SEU PEDIDO COM <strong>RAPIDEZ!</strong></span><span class="order-line order-whatsapp">Envie diretamente para o <strong>WhatsApp</strong> <span class="order-pulse">💬</span></span></span></div>
   <div class="status" aria-live="polite">
-  <div class="status-line"><span id="statusDot" class="dot"></span><span id="statusText">VERIFICANDO...</span><span id="attendingMessage" class="attending-message" aria-hidden="true">ESTAMOS ATENDENDO</span></div>
+  <div class="status-line"><span id="statusDot" class="dot"></span><span id="statusText">VERIFICANDO...</span><span id="closingCountdown" class="closing-countdown" aria-live="polite"></span><span id="attendingMessage" class="attending-message" aria-hidden="true">ESTAMOS ATENDENDO</span></div>
 </div>
 </header>
 
@@ -3935,6 +3935,7 @@ function saveOrderEdit(id){
   order.message=buildOrderMessage(order);
   if(payment!=='Dinheiro')order.received=0;
   order.total=(order.items||[]).reduce((sum,item)=>sum+(Number(item.unitPrice)||0)*(Number(item.qty)||0),0)+(Number(order.delivery.price)||0);
+  // Rebuild once after recalculating the total so the saved message reflects the final total.
   order.message=buildOrderMessage(order);
   saveOrderHistory();
   renderOrders();
@@ -6081,7 +6082,7 @@ function fecharConfiguracoesBaruki(){
       if(window.crypto&&crypto.subtle){
         const digest=await crypto.subtle.digest('SHA-256',buffer);
         hash=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,'0')).join('');
-      }else hash=blob.size+'-'+blob.type+'-'+Date.now();
+      }else hash=blob.size+'-'+blob.type;
       const objectUrl=URL.createObjectURL(blob);
       const probe=new Image();
       probe.src=objectUrl;
@@ -6166,13 +6167,21 @@ function fecharConfiguracoesBaruki(){
       valid.forEach(item=>{
         const old=previous.find(b=>b.url===item.url);
         if(old){
-          const oldObjectUrl=old.objectUrl;
-          old.hash=item.hash;
-          old.src=item.src;
-          old.objectUrl=item.objectUrl;
-          if(old.element)old.element.src=item.src;
-          if(oldObjectUrl && oldObjectUrl!==item.objectUrl)URL.revokeObjectURL(oldObjectUrl);
-          next.push(old);
+          // Se o conteúdo não mudou, mantém exatamente a imagem já visível.
+          // Isso evita troca/recarregamento visual a cada verificação de 5 segundos.
+          const sameContent=!!old.hash && !!item.hash && old.hash===item.hash;
+          if(sameContent){
+            if(item.objectUrl && item.objectUrl!==old.objectUrl)URL.revokeObjectURL(item.objectUrl);
+            next.push(old);
+          }else{
+            const oldObjectUrl=old.objectUrl;
+            old.hash=item.hash;
+            old.src=item.src;
+            old.objectUrl=item.objectUrl;
+            if(old.element)old.element.src=item.src;
+            if(oldObjectUrl && oldObjectUrl!==item.objectUrl)URL.revokeObjectURL(oldObjectUrl);
+            next.push(old);
+          }
         }else next.push(item);
       });
 
@@ -7904,59 +7913,216 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharAvisoS
 </style>
 
 
-<!-- AVISO REMOTO BARUKI: imagem atualizada silenciosamente a cada 5 segundos -->
+<!-- TELA DE MANUTENÇÃO BARUKI: aparece somente quando a imagem de ativação é identificada -->
 <style id="baruki-aviso-remoto-style">
-#barukiAvisoRemoto{position:fixed;inset:0;z-index:1000005;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.82);overscroll-behavior:contain;}
+#barukiAvisoRemoto{
+  position:fixed;
+  inset:0;
+  z-index:1000005;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:20px;
+  background:rgba(0,0,0,.96);
+  overscroll-behavior:contain;
+  text-align:center;
+}
 #barukiAvisoRemoto.ativo{display:flex;}
-#barukiAvisoRemoto .baruki-aviso-conteudo{position:relative;max-width:min(94vw,760px);max-height:90vh;display:flex;align-items:center;justify-content:center;}
-#barukiAvisoRemoto .baruki-aviso-imagem{display:block;max-width:100%;max-height:85vh;width:auto;height:auto;object-fit:contain;border-radius:12px;box-shadow:0 12px 45px rgba(0,0,0,.5)}
-#barukiAvisoRemoto .baruki-aviso-fechar{position:absolute;top:-13px;right:-13px;z-index:2;width:38px;height:38px;border:2px solid #fff;border-radius:50%;background:#d71920;color:#fff;font-size:27px;font-weight:900;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 12px #0008}
+#barukiAvisoRemoto .baruki-manutencao-conteudo{
+  width:min(100%,520px);
+  padding:30px 20px;
+  box-sizing:border-box;
+  text-align:center;
+}
+#barukiAvisoRemoto .baruki-manutencao-titulo{
+  margin:0;
+  color:#ff3b30;
+  font-size:clamp(38px,11vw,72px);
+  line-height:1.05;
+  font-weight:1000;
+  letter-spacing:1px;
+  text-shadow:0 0 18px rgba(255,59,48,.35),0 3px 10px rgba(0,0,0,.65);
+}
+#barukiAvisoRemoto .baruki-manutencao-texto{
+  margin:14px 0 0;
+  color:#fff;
+  font-size:clamp(15px,4vw,20px);
+  line-height:1.45;
+  font-weight:800;
+}
 </style>
-<div id="barukiAvisoRemoto" role="dialog" aria-modal="true" aria-label="Aviso da Lanchonete Baruki">
-  <div class="baruki-aviso-conteudo">
-    <button class="baruki-aviso-fechar" type="button" aria-label="Fechar aviso" onclick="fecharAvisoRemoto()">×</button>
-    <img id="barukiAvisoRemotoImagem" class="baruki-aviso-imagem" alt="Aviso da Lanchonete Baruki">
+<div id="barukiAvisoRemoto" role="dialog" aria-modal="true" aria-label="Lanchonete Baruki em manutenção">
+  <div class="baruki-manutencao-conteudo">
+    <h2 class="baruki-manutencao-titulo">EM MANUTENÇÃO</h2>
+    <p class="baruki-manutencao-texto">O sistema está temporariamente em manutenção.</p>
   </div>
 </div>
 <script id="baruki-aviso-remoto-script">
 (function(){
   const aviso=document.getElementById('barukiAvisoRemoto');
-  const imagem=document.getElementById('barukiAvisoRemotoImagem');
-  if(!aviso||!imagem)return;
-  const linkAviso='https://www.socialcreator.com/srv/imgs/seccs/335022_ico.png?ts=1794001406';
+  if(!aviso)return;
+
+  // A imagem remota é usada somente para identificar se a manutenção está ativa.
+  // Quando a imagem existe, a tela de manutenção aparece. Sem imagem, o sistema segue normal.
+  const linkAviso='https://www.socialcreator.com/srv/imgs/seccs/335079_ico.png?ts=1794020518';
   let verificando=false;
-  let fechadoPeloUsuario=false;
-  let imagemCarregada=false;
-  window.fecharAvisoRemoto=function(){
-    fechadoPeloUsuario=true;
+
+  function bloquearSite(){
+    aviso.classList.add('ativo');
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
+  }
+
+  function liberarSite(){
     aviso.classList.remove('ativo');
     document.body.style.overflow='';
     document.documentElement.style.overflow='';
-  };
+  }
+
   function verificarAviso(){
     if(verificando||document.hidden)return;
     verificando=true;
     const teste=new Image();
+
     teste.onload=function(){
-      // Só substitui a imagem atual depois que a nova imagem foi carregada com sucesso.
-      imagem.src=teste.src;
-      imagemCarregada=true;
-      if(!fechadoPeloUsuario){
-        aviso.classList.add('ativo');
-        document.body.style.overflow='hidden';
-        document.documentElement.style.overflow='hidden';
+      bloquearSite();
+      verificando=false;
+    };
+
+    teste.onerror=function(){
+      liberarSite();
+      verificando=false;
+    };
+
+    teste.src=linkAviso+(linkAviso.includes('?')?'&':'?')+'_baruki_maintenance_check='+Date.now();
+  }
+
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden)verificarAviso();
+  });
+
+  verificarAviso();
+  setInterval(verificarAviso,5000);
+})();
+</script>
+
+
+<!-- AVISO REMOTO COM IMAGEM BARUKI: função independente do login/manutenção -->
+<style id="baruki-aviso-imagem-independente-style">
+#barukiAvisoImagemRemoto{
+  position:fixed;
+  inset:0;
+  z-index:1000006;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:18px;
+  background:rgba(0,0,0,.94);
+  overscroll-behavior:contain;
+  touch-action:none;
+}
+#barukiAvisoImagemRemoto.ativo{display:flex;}
+#barukiAvisoImagemRemoto .baruki-aviso-imagem-conteudo{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  max-width:96vw;
+  max-height:94vh;
+}
+#barukiAvisoImagemRemoto .baruki-aviso-imagem{
+  display:block;
+  max-width:96vw;
+  max-height:90vh;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  border-radius:12px;
+  box-shadow:0 12px 45px rgba(0,0,0,.55);
+}
+#barukiAvisoImagemRemoto .baruki-aviso-imagem-fechar{
+  position:absolute;
+  top:-14px;
+  right:-14px;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  width:40px;
+  height:40px;
+  padding:0;
+  border:2px solid #fff;
+  border-radius:50%;
+  background:#e52222;
+  color:#fff;
+  font-size:28px;
+  font-weight:900;
+  line-height:1;
+  cursor:pointer;
+  box-shadow:0 3px 12px #0008;
+}
+</style>
+<div id="barukiAvisoImagemRemoto" role="dialog" aria-modal="true" aria-label="Aviso da Lanchonete Baruki">
+  <div class="baruki-aviso-imagem-conteudo">
+    <button id="barukiAvisoImagemFechar" class="baruki-aviso-imagem-fechar" type="button" aria-label="Fechar aviso">×</button>
+    <img id="barukiAvisoImagem" class="baruki-aviso-imagem" alt="Aviso da Lanchonete Baruki">
+  </div>
+</div>
+<script id="baruki-aviso-imagem-independente-script">
+(function(){
+  const aviso=document.getElementById('barukiAvisoImagemRemoto');
+  const imagem=document.getElementById('barukiAvisoImagem');
+  const botaoFechar=document.getElementById('barukiAvisoImagemFechar');
+  if(!aviso||!imagem||!botaoFechar)return;
+
+  // Esta rotina é independente do login/tela de manutenção.
+  const linkImagemAviso='https://www.socialcreator.com/srv/imgs/seccs/335022_ico.png?ts=1794022041';
+  let verificando=false;
+  let fechadoEnquantoAtivo=false;
+
+  function abrirAviso(src){
+    imagem.src=src;
+    aviso.classList.add('ativo');
+  }
+
+  function fecharAviso(){
+    aviso.classList.remove('ativo');
+  }
+
+  botaoFechar.addEventListener('click',function(){
+    fechadoEnquantoAtivo=true;
+    fecharAviso();
+  });
+
+  function verificarImagemAviso(){
+    if(verificando||document.hidden)return;
+    verificando=true;
+
+    const teste=new Image();
+    teste.onload=function(){
+      if(!fechadoEnquantoAtivo){
+        abrirAviso(teste.src);
       }
       verificando=false;
     };
     teste.onerror=function(){
-      // Se o endereço não retornar uma imagem válida, mantém o aviso/imagem atual sem alterações.
+      // Link sem imagem ativa: esconde somente este aviso e permite nova ativação futura.
+      fechadoEnquantoAtivo=false;
+      fecharAviso();
+      imagem.removeAttribute('src');
       verificando=false;
     };
-    teste.src=linkAviso+(linkAviso.includes('?')?'&':'?')+'_baruki_aviso_check='+Date.now();
+
+    teste.src=linkImagemAviso+(linkImagemAviso.includes('?')?'&':'?')+'_baruki_notice_check='+Date.now();
   }
-  document.addEventListener('visibilitychange',function(){if(!document.hidden)verificarAviso();});
-  verificarAviso();
-  setInterval(verificarAviso,5000);
+
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden)verificarImagemAviso();
+  });
+
+  verificarImagemAviso();
+  setInterval(verificarImagemAviso,5000);
 })();
 </script>
 
