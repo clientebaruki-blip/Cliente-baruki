@@ -8902,5 +8902,110 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
   document.addEventListener('visibilitychange',function(){if(!document.hidden)load();});
 })();
 </script>
+<style id="baruki-resumo-pizza-amarelo-laranja">
+/* Resumo da pizza G (2 sabores) — visual amarelo/laranja. Somente CSS. */
+#twoFlavorTotal{
+  border:2px solid transparent!important;
+  border-radius:18px!important;
+  background-image:linear-gradient(160deg,#1a1208,#0a0a0a),linear-gradient(135deg,#ffd54a,#ff8a00,#ff5a00)!important;
+  background-origin:border-box!important;
+  background-clip:padding-box,border-box!important;
+  background-color:transparent!important;
+  box-shadow:0 8px 26px rgba(255,140,0,.25),0 0 0 1px rgba(255,213,74,.08)!important;
+  padding:12px 14px!important;
+}
+#twoFlavorTotal>.row:not(.total){
+  color:#f4f4f4!important;
+  border-bottom:1px solid rgba(255,170,40,.28)!important;
+}
+#twoFlavorTotal>.row:not(.total)>strong{
+  color:#ffd54a!important;-webkit-text-fill-color:#ffd54a!important;
+  text-shadow:0 0 8px rgba(255,213,74,.25)!important;
+}
+#twoFlavorTotal>.total{
+  background:linear-gradient(135deg,#ff5a00,#ff9d00 60%,#ffd54a)!important;
+  border-radius:14px!important;
+  padding:12px 14px!important;
+  margin:10px 0 0!important;
+  box-shadow:0 6px 18px rgba(255,120,0,.35),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+#twoFlavorTotal>.total>span{
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.45)!important;letter-spacing:.5px!important;
+}
+#twoFlavorTotal>.total>strong{
+  color:#1a0d00!important;-webkit-text-fill-color:#1a0d00!important;
+  font-size:22px!important;font-weight:950!important;-webkit-text-stroke:0!important;text-shadow:none!important;
+}
+body.day-theme #twoFlavorTotal>.row:not(.total){color:#f4f4f4!important}
+body.day-theme #twoFlavorTotal>.total>span{color:#fff!important}
+@media(max-width:480px){#twoFlavorTotal>.total>strong{font-size:20px!important}}
+</style>
+<style id="baruki-cardapio-amarelo-laranja">
+/* Visual amarelo/laranja do cardápio inteiro. Somente CSS: nenhuma função ou texto alterado. */
+:root{--bk-y:#ffd54a;--bk-o:#ff8a00;--bk-r:#ff5a00}
+
+/* Cards de produto */
+body:not(.day-theme) .product{
+  border:1.5px solid transparent!important;
+  background-image:linear-gradient(160deg,#1c1409,#101010),linear-gradient(135deg,rgba(255,213,74,.75),rgba(255,138,0,.55),rgba(255,90,0,.75))!important;
+  background-origin:border-box!important;background-clip:padding-box,border-box!important;
+  background-color:transparent!important;
+  box-shadow:0 6px 18px rgba(255,120,0,.14)!important}
+body:not(.day-theme) .product .price,
+body:not(.day-theme) .product-price{
+  color:var(--bk-y)!important;-webkit-text-fill-color:var(--bk-y)!important;
+  text-shadow:0 0 8px rgba(255,213,74,.25)!important}
+body.day-theme .product .price{color:#e65100!important;-webkit-text-fill-color:#e65100!important}
+
+/* Botões principais */
+.add,.btn:not(.secondary){
+  background:linear-gradient(135deg,#ff5a00,#ff9d00 60%,#ffd54a)!important;
+  color:#1a0d00!important;-webkit-text-fill-color:#1a0d00!important;
+  border:0!important;font-weight:900!important;
+  box-shadow:0 5px 14px rgba(255,120,0,.35),inset 0 1px 0 rgba(255,255,255,.35)!important;
+  text-shadow:none!important}
+
+/* Categorias */
+.cat{border:1.5px solid rgba(255,170,40,.45)!important}
+#categories .cat.active,.categories .cat.active,.cat.active{
+  background:linear-gradient(135deg,#ff5a00,#ff9d00 60%,#ffd54a)!important;
+  border-color:#ffd54a!important;
+  box-shadow:0 5px 16px rgba(255,140,0,.4)!important}
+#categories .cat.active .category-label{color:#1a0d00!important;-webkit-text-fill-color:#1a0d00!important}
+
+/* Navegação inferior */
+nav.bottom{border-top:2px solid transparent!important;
+  border-image:linear-gradient(90deg,#ffd54a,#ff8a00,#ff5a00) 1!important}
+.bottom .nav.active,nav.bottom .nav.active{
+  background:linear-gradient(135deg,#ff5a00,#ff9d00 60%,#ffd54a)!important;
+  color:#1a0d00!important;outline-color:#ffd54a!important;border-color:#ffd54a!important}
+.bottom .nav.active span,nav.bottom .nav.active > span:not(.nav-badge){color:#1a0d00!important;-webkit-text-fill-color:#1a0d00!important;text-shadow:none!important}
+
+/* Painéis, resumos e totais (carrinho, finalização, pizza) */
+body:not(.day-theme) .panel,
+body:not(.day-theme) .cart-item,
+body:not(.day-theme) .summary:not(#twoFlavorTotal),
+body:not(.day-theme) .checkout-card,
+body:not(.day-theme) .order-card{
+  border:1.5px solid rgba(255,170,40,.4)!important;
+  box-shadow:0 6px 18px rgba(255,120,0,.12)!important}
+body:not(.day-theme) .panel h2,
+body:not(.day-theme) .section h3,
+body:not(.day-theme) .pizza2-choice-head h3{
+  color:var(--bk-y)!important;-webkit-text-fill-color:var(--bk-y)!important}
+.summary:not(#twoFlavorTotal) .total,#pizzaTotal .total,#checkoutSummary .total{
+  background:linear-gradient(135deg,#ff5a00,#ff9d00 60%,#ffd54a)!important;
+  border-radius:12px!important;padding:10px 12px!important;
+  box-shadow:0 6px 18px rgba(255,120,0,.3)!important}
+.summary:not(#twoFlavorTotal) .total>span,#pizzaTotal .total>span,#checkoutSummary .total>span{
+  color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 1px 3px rgba(0,0,0,.45)!important}
+.summary:not(#twoFlavorTotal) .total>strong,#pizzaTotal .total>strong,#checkoutSummary .total>strong,
+#detailContent .total strong{
+  color:#1a0d00!important;-webkit-text-fill-color:#1a0d00!important;-webkit-text-stroke:0!important;text-shadow:none!important}
+
+/* Opções selecionáveis e destaques */
+input[type=radio],input[type=checkbox]{accent-color:#ff8a00!important}
+</style>
 </body>
 </html>
