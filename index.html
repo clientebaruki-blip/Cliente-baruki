@@ -1873,6 +1873,144 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 #categories .cat{box-sizing:border-box!important;}
 #categories .cat:active{transform:none!important;}
 </style>
+<style id="baruki-numero-fundo-igual">
+/* Ajuste autorizado: campo Número com o mesmo fundo dos outros campos (remove o fundo azulado do autofill do navegador). */
+#addressNumber:-webkit-autofill,
+#addressNumber:-webkit-autofill:hover,
+#addressNumber:-webkit-autofill:focus,
+#addressNumber:autofill{
+  -webkit-text-fill-color:#fff !important;
+  caret-color:#fff;
+  transition:background-color 600000s 0s, color 600000s 0s !important;
+}
+</style>
+<style id="pizza2-visual-estiloso">
+/* Ajuste autorizado: somente o visual da tela "Monte sua Pizza G". Nenhuma função, texto ou lógica foi alterada. */
+body:not(.day-theme) .pizza2-page .pizza2-top{
+  background:
+    radial-gradient(circle at 88% 8%,rgba(255,150,50,.38),transparent 42%),
+    radial-gradient(circle at 6% 100%,rgba(255,90,0,.22),transparent 48%),
+    linear-gradient(150deg,#341a0a 0%,#1a1a1a 55%,#2a1507 100%)!important;
+  border:1px solid rgba(255,140,60,.55)!important;
+  box-shadow:0 18px 44px rgba(255,90,0,.16),0 0 0 1px rgba(255,200,120,.06) inset!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-kicker{
+  display:inline-block;padding:5px 10px;border-radius:99px;
+  background:rgba(255,107,0,.14);border:1px solid rgba(255,140,60,.35);color:#ffb070!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-icon{
+  background:linear-gradient(145deg,#ffa02e,#f04e00)!important;
+  box-shadow:0 12px 28px rgba(255,100,0,.45),inset 0 2px 0 rgba(255,255,255,.35)!important;
+  animation:pz2float 3.2s ease-in-out infinite;
+}
+@keyframes pz2float{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-4px)}}
+body:not(.day-theme) .pizza2-page .pizza2-title-row h2{
+  background:linear-gradient(90deg,#fff 0%,#ffd9a8 60%,#ffb35c 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent;
+}
+body:not(.day-theme) .pizza2-page .pizza2-progress .step{height:9px!important;background:rgba(255,255,255,.08)!important}
+body:not(.day-theme) .pizza2-page .pizza2-progress .step.active{
+  background:linear-gradient(90deg,#ff5a00,#ffb02e)!important;box-shadow:0 0 14px rgba(255,120,0,.6)!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-progress-text{color:#d7b394!important}
+
+/* Prévia das duas metades */
+body:not(.day-theme) .pizza2-page .pizza2-half-preview{
+  background:linear-gradient(150deg,rgba(255,255,255,.07),rgba(255,255,255,.015))!important;
+  border:1px solid rgba(255,255,255,.11)!important;border-radius:20px!important;
+  backdrop-filter:blur(4px);transition:.25s;
+}
+body:not(.day-theme) .pizza2-page #pizza2Preview1{border-left:4px solid #ff6b00!important}
+body:not(.day-theme) .pizza2-page #pizza2Preview2{border-left:4px solid #ffb02e!important}
+body:not(.day-theme) .pizza2-page .pizza2-half-preview.filled{
+  border-color:rgba(0,220,100,.55)!important;
+  background:linear-gradient(150deg,rgba(0,220,100,.16),rgba(255,255,255,.02))!important;
+  box-shadow:0 8px 22px rgba(0,200,83,.14);
+}
+body:not(.day-theme) .pizza2-page .pizza2-half-icon{opacity:.3!important;font-size:30px!important;transform:rotate(12deg)}
+body:not(.day-theme) .pizza2-page .pizza2-half-name{color:#fff}
+
+/* Cartões de escolha */
+body:not(.day-theme) .pizza2-page .pizza2-choice{
+  background:linear-gradient(155deg,#242424,#151515)!important;
+  border:1px solid rgba(255,255,255,.09)!important;border-radius:22px!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.35)!important;overflow:hidden;
+}
+body:not(.day-theme) .pizza2-page .pizza2-choice:before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,#ff6b00,#ffb02e);opacity:.55;transition:.25s;
+}
+body:not(.day-theme) .pizza2-page .pizza2-choice.selected{
+  border-color:rgba(0,220,100,.5)!important;
+  box-shadow:0 12px 32px rgba(0,200,83,.12)!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-choice.selected:before{background:linear-gradient(180deg,#2eea7d,#00b85a);opacity:1}
+body:not(.day-theme) .pizza2-page .pizza2-number{
+  border-radius:14px!important;background:linear-gradient(145deg,#333,#222)!important;color:#ffb070!important;
+  border:1px solid rgba(255,140,60,.35)!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-choice.selected .pizza2-number{
+  background:linear-gradient(145deg,#2eea7d,#00a34f)!important;color:#05140b!important;border-color:transparent!important;
+  box-shadow:0 6px 16px rgba(0,200,83,.35)!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-field-label{color:#ffb070!important}
+
+/* Seletores */
+body:not(.day-theme) .pizza2-page .pizza2-select{
+  background:linear-gradient(180deg,#0e0e0e,#161616)!important;
+  border:1px solid rgba(255,255,255,.14)!important;border-radius:15px!important;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.5);
+}
+body:not(.day-theme) .pizza2-page .pizza2-select:focus{
+  border-color:#ff8a3d!important;box-shadow:0 0 0 3px rgba(255,107,0,.2),inset 0 2px 6px rgba(0,0,0,.5)!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-select-wrap:after{
+  width:28px;height:28px;right:10px!important;top:50%;transform:translateY(-50%);
+  display:grid;place-items:center;padding-bottom:6px;box-sizing:border-box;border-radius:50%;
+  background:rgba(255,107,0,.16);color:#ffa05a;
+}
+body:not(.day-theme) .pizza2-page .pizza2-selected{
+  border-radius:14px!important;background:rgba(0,0,0,.35)!important;border:1px dashed rgba(255,255,255,.16)!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-selected.has-value{
+  background:rgba(0,220,100,.1)!important;border:1px solid rgba(0,220,100,.4)!important;
+}
+
+/* Sinal de + entre as metades */
+body:not(.day-theme) .pizza2-page .pizza2-plus{height:40px!important}
+body:not(.day-theme) .pizza2-page .pizza2-plus span{
+  width:36px;height:36px;border-radius:50%;display:grid;place-items:center;line-height:1;
+  background:linear-gradient(145deg,#ff8a2a,#e94d00);color:#fff;font-size:22px;
+  box-shadow:0 6px 18px rgba(255,100,0,.45);
+}
+body:not(.day-theme) .pizza2-page .pizza2-plus:before,
+body:not(.day-theme) .pizza2-page .pizza2-plus:after{background:linear-gradient(90deg,transparent,rgba(255,140,60,.5))}
+body:not(.day-theme) .pizza2-page .pizza2-plus:after{background:linear-gradient(270deg,transparent,rgba(255,140,60,.5))}
+
+/* Avisos, borda, total e botão */
+body:not(.day-theme) .pizza2-page .pizza2-lock,
+body:not(.day-theme) .pizza2-page .pizza2-tip{
+  background:linear-gradient(135deg,rgba(255,107,0,.12),rgba(255,176,46,.05))!important;
+  border:1px solid rgba(255,140,60,.28)!important;border-radius:16px!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-border{
+  background:linear-gradient(155deg,#222,#151515)!important;border:1px solid rgba(255,255,255,.09)!important;
+  border-radius:22px!important;box-shadow:0 12px 30px rgba(0,0,0,.3);
+}
+body:not(.day-theme) .pizza2-page .pizza2-radio{border-radius:15px!important;transition:.2s}
+body:not(.day-theme) .pizza2-page .pizza2-radio:has(input:checked){
+  border-color:#ff8a3d!important;background:linear-gradient(135deg,rgba(255,107,0,.2),rgba(255,107,0,.05))!important;
+  box-shadow:0 6px 18px rgba(255,107,0,.15);
+}
+body:not(.day-theme) .pizza2-page .pizza2-total{
+  background:linear-gradient(155deg,#1f2a22,#121212)!important;
+  border:1px solid rgba(0,220,100,.35)!important;box-shadow:0 12px 30px rgba(0,200,83,.1)!important;
+}
+body:not(.day-theme) .pizza2-page .pizza2-total .total strong{text-shadow:0 0 16px rgba(85,237,145,.45)}
+body:not(.day-theme) .pizza2-page .pizza2-note textarea{border:1px solid rgba(255,255,255,.14)!important}
+body:not(.day-theme) .pizza2-page .pizza2-add{box-shadow:0 12px 28px rgba(255,107,0,.3)!important;letter-spacing:.4px}
+@media(prefers-reduced-motion:reduce){body:not(.day-theme) .pizza2-page .pizza2-icon{animation:none}}
+</style>
 </head>
 <body>
 <!-- TELA DE MANUTENÇÃO BARUKI (no início da página para aparecer imediatamente) -->
@@ -2211,7 +2349,7 @@ body.day-theme #mensagemBiblicaDiaria .mbd-data{color:#666}
   <h2>Finalizar pedido</h2>
   <div class="notice">Confira os dados e o valor antes de enviar.</div>
 
-  <div class="formgroup"><label>Nome</label><input id="clientName" type="text" placeholder="Seu nome" autocomplete="name"><label class="option" style="margin-top:8px"><input type="checkbox" id="v2SaveCustomerName"> Salvar meu nome neste aparelho (opcional)</label></div>
+  <div class="formgroup"><label>Nome</label><input id="clientName" type="text" placeholder="Coloque seu nome" autocomplete="name" required><label class="option" style="margin-top:8px"><input type="checkbox" id="v2SaveCustomerName"> Salvar meu nome neste aparelho (opcional)</label></div>
   <div class="section">
     <label class="option"><input type="radio" name="delivery" value="Balcão" data-price="0" onchange="delivery(this)"> Retirada no balcão</label>
   </div>
@@ -5052,7 +5190,8 @@ function sendWhatsApp(){
   const address=document.getElementById('address').value.trim();
   const number=document.getElementById('addressNumber').value.trim();
 
-  // O nome é opcional; os demais campos obrigatórios continuam sendo validados.
+  // O nome é obrigatório para finalizar o pedido.
+  if(!name){toast('Informe seu nome para finalizar o pedido.');const cn=document.getElementById('clientName');if(cn)cn.focus();return;}
   if(!selectedDelivery){toast('Escolha a forma de entrega.');return}
   if(!selectedPayment){toast('Escolha a forma de pagamento.');return}
 
