@@ -4502,7 +4502,6 @@ function renderOrders(){
       '<div class="order-detail-row"><span>Endereço</span><strong>'+safeText(order.address?(order.address+(order.number?', '+order.number:'')):'Retirada no balcão')+'</strong></div>'+
       '<div class="order-detail-row"><span>Pagamento</span><strong>'+safeText(payment)+'</strong></div>'+
       '<div class="order-items-full"><strong>Pedido completo</strong>'+itemText+'</div>'+
-      (order.message ? '<div class="order-items-full order-whatsapp-message"><strong>📲 Mensagem completa do WhatsApp</strong><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.55;margin:10px 0 0;color:inherit">'+safeText(order.message)+'</pre></div>' : '')+
       '</div>'+
       '<div class="order-card-total"><span>Total</span><strong>'+money(order.total)+'</strong></div>'+
       '<div class="order-edit" id="orderEdit-'+id+'">'+
@@ -5554,30 +5553,11 @@ function sendWhatsApp(){
   saveCart();
   updateBadge();
   renderCart();
-  // Volta para a tela principal do cardápio antes de abrir o WhatsApp
-  // e marca o envio para garantir o retorno ao menu quando o cliente voltar.
-  try{sessionStorage.setItem('baruki_order_sent_return','1');}catch(e){}
-  go('menu');
   const url='https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(message);
   // Abre o WhatsApp na mesma aba para evitar bloqueio de pop-ups no celular.
   // O pedido e o histórico já foram salvos antes do redirecionamento.
   window.location.href=url;
 }
-
-/* Ao voltar do WhatsApp após enviar o pedido, mostra a tela principal do cardápio. */
-(function barukiReturnToMenuAfterOrder(){
-  const KEY='baruki_order_sent_return';
-  function backToMenu(){
-    let flag=null;
-    try{flag=sessionStorage.getItem(KEY);}catch(e){}
-    if(flag!=='1')return;
-    try{sessionStorage.removeItem(KEY);}catch(e){}
-    try{go('menu');}catch(e){}
-  }
-  window.addEventListener('pageshow',backToMenu);
-  document.addEventListener('visibilitychange',function(){if(!document.hidden)backToMenu();});
-  window.addEventListener('focus',backToMenu);
-})();
 
 /* =========================
    INICIALIZAÇÃO ROBUSTA
