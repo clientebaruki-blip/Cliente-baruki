@@ -2070,6 +2070,7 @@ html.ctl-logo-off #categories .cat .category-image{display:none!important}
 html.ctl-logo-off #categories .cat{min-height:52px!important}
 html.ctl-natal-off .nat-frame{display:none!important}
 html.ctl-natal-off body.nat-on{padding-top:0!important;padding-left:0!important;padding-right:0!important}
+html.ctl-comer-off #optComerNoLocal{display:none!important}
 #categories .cat .cat-emoji{display:flex!important;align-items:center;justify-content:center;font-size:44px;line-height:1;background:#111!important}
 @media(max-width:600px){#categories .cat .cat-emoji{font-size:38px}}
 </style>
@@ -2079,11 +2080,11 @@ html.ctl-natal-off body.nat-on{padding-top:0!important;padding-left:0!important;
    Se a aba não carregar, nada muda: o site segue como está (usa o último estado salvo no aparelho). */
 (function(){
   'use strict';
-  var SHEET_ID='1_G8UW_PYJ2T2GuolYMnn0_LuMYE1YqBOrBGa_4ZBcyA';
+  var SHEET_ID='1nklDUx06hYv0VUE9vSSC94ZdYtU2hNDXd2PHc9OvZ_g';
   var SHEET_TAB='Controle';
   var URL_CSV='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(SHEET_TAB);
   var CACHE_KEY='baruki_controle_cache_v4';
-  var KEYS=['loja','aviso_1','aviso_2','banners','banner_1','banner_2','banner_3','banner_4','banner_5','banner_6','banner_7','banner_8','natal','manutencao','logo_categorias','banner_sobe','promocao','atualizar_site'];
+  var KEYS=['loja','aviso_1','aviso_2','banners','banner_1','banner_2','banner_3','banner_4','banner_5','banner_6','banner_7','banner_8','natal','manutencao','logo_categorias','banner_sobe','promocao','atualizar_site','comer_no_local'];
   var state={},last='',busy=false,manutApplied=null,remoteStatus=null,R=document.documentElement;
 
   function plain(s){return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();}
@@ -2230,6 +2231,8 @@ html.ctl-natal-off body.nat-on{padding-top:0!important;padding-left:0!important;
     flag('ctl-sobe-off',state.banner_sobe===false);
     flag('ctl-logo-off',state.logo_categorias===false);
     flag('ctl-natal-off',state.natal===false);
+    flag('ctl-comer-off',state.comer_no_local===false);
+    if(state.comer_no_local===false){try{var cr=document.querySelector('input[name="delivery"][value="Comer no local"]');if(cr&&cr.checked){cr.checked=false;selectedDelivery=null;updateCheckout();}}catch(e){}}
     if(has('natal'))natal(state.natal===true);
     try{manut();}catch(e){console.error('[Controle] manutenção',e);}
     if(prev){
@@ -2583,6 +2586,7 @@ body.day-theme #mensagemBiblicaDiaria .mbd-data{color:#666}
 
   <div class="formgroup"><label>Nome</label><input id="clientName" type="text" placeholder="Coloque seu nome" autocomplete="name" required><label class="option" style="margin-top:8px"><input type="checkbox" id="v2SaveCustomerName"> Salvar meu nome neste aparelho (opcional)</label></div>
   <div class="section">
+    <label id="optComerNoLocal" class="option"><input type="radio" name="delivery" value="Comer no local" data-price="0" onchange="delivery(this)"> Comer no local</label>
     <label class="option"><input type="radio" name="delivery" value="Balcão" data-price="0" onchange="delivery(this)"> Retirada no balcão</label>
   </div>
   <div id="pickupTimeFields" class="formgroup" style="display:none">
@@ -4314,7 +4318,9 @@ function cleanOrderName(v){return String(v||'').replace(/[\r\n]/g,' ').replace(/
 function buildOrderMessage(order){
   let message='*NOVO PEDIDO - LANCHONETE BARUKI*\n\n';
   message+='*Cliente:* '+(order.customer||'Cliente')+'\n';
-  if(order.delivery?.name && order.delivery.name==='Balcão'){
+  if(order.delivery?.name && order.delivery.name==='Comer no local'){
+    message+='*Comer no local*\n';
+  }else if(order.delivery?.name && order.delivery.name==='Balcão'){
     message+='*Retirada no balcão*\n';
   }else if(order.delivery?.name){
     message+='*Entrega:* '+order.delivery.name+'\n';
@@ -4342,7 +4348,7 @@ function buildOrderMessage(order){
   });
   const subtotal=(order.items||[]).reduce((s,i)=>s+(Number(i.unitPrice)||0)*(Number(i.qty)||0),0);
   message+='\n*Subtotal:* '+money(subtotal)+'\n';
-  if(order.delivery?.name && order.delivery.name!=='Balcão')message+='*Entrega:* '+money(Number(order.delivery.price)||0)+'\n';
+  if(order.delivery?.name && order.delivery.name!=='Balcão' && order.delivery.name!=='Comer no local')message+='*Entrega:* '+money(Number(order.delivery.price)||0)+'\n';
   message+='*TOTAL:* '+money(Number(order.total)||subtotal+(order.delivery?.name==='Balcão'?0:(Number(order.delivery?.price)||0)));
   return message;
 }
@@ -5433,7 +5439,7 @@ function sendWhatsApp(){
   if(!selectedDelivery){toast('Escolha a forma de entrega.');return}
   if(!selectedPayment){toast('Escolha a forma de pagamento.');return}
 
-  if(selectedDelivery.name!=='Balcão' && (!address||!number)){
+  if(selectedDelivery.name!=='Balcão' && selectedDelivery.name!=='Comer no local' && (!address||!number)){
     toast('Informe endereço e número.');
     return;
   }
@@ -5451,7 +5457,9 @@ function sendWhatsApp(){
   message+='◆ *PEDIDO LANCHONETE BARUKI* ◆\n\n';
   if(name) message+='◆ *Cliente:* '+name+'\n';
 
-  if(selectedDelivery.name==='Balcão'){
+  if(selectedDelivery.name==='Comer no local'){
+    message+='◆ *Comer no local*\n';
+  }else if(selectedDelivery.name==='Balcão'){
     const pickupTime=document.getElementById('pickupTime')?.value||'';
     if(!pickupTime){toast('Selecione o horário para retirada.');return;}
     if(!(new Date().getDay()>=2 && new Date().getDay()<=6)){toast('Retirada disponível somente de terça a sábado.');return;}
@@ -5540,7 +5548,7 @@ function sendWhatsApp(){
 
   message+='\n◆ *Resumo:*\n';
   message+='• Subtotal: '+money(cartSubtotal())+'\n';
-  if(selectedDelivery.name!=='Balcão') message+='• Entrega: '+money(selectedDelivery.price)+'\n';
+  if(selectedDelivery.name!=='Balcão' && selectedDelivery.name!=='Comer no local') message+='• Entrega: '+money(selectedDelivery.price)+'\n';
   message+='★ *TOTAL: '+money(total)+'*';
 
   if(selectedPayment==='Dinheiro'){
@@ -8999,7 +9007,7 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
    Se a planilha não carregar, o cardápio atual continua funcionando.
    ========================================================= */
 (function(){
-  var SHEET_ID='1_G8UW_PYJ2T2GuolYMnn0_LuMYE1YqBOrBGa_4ZBcyA';
+  var SHEET_ID='1nklDUx06hYv0VUE9vSSC94ZdYtU2hNDXd2PHc9OvZ_g';
   var SHEET_TAB='Cardápio';
   var SHEET_URL='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(SHEET_TAB);
   var CACHE_KEY='baruki_planilha_cache_v6';
