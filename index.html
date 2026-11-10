@@ -2011,6 +2011,16 @@ body:not(.day-theme) .pizza2-page .pizza2-note textarea{border:1px solid rgba(25
 body:not(.day-theme) .pizza2-page .pizza2-add{box-shadow:0 12px 28px rgba(255,107,0,.3)!important;letter-spacing:.4px}
 @media(prefers-reduced-motion:reduce){body:not(.day-theme) .pizza2-page .pizza2-icon{animation:none}}
 </style>
+<style id="baruki-promocao">
+/* Categoria PROMOÇÃO — só aparece quando há promoção ativa na planilha */
+#categories .cat.promo-cat{background:linear-gradient(160deg,#ff9d00,#f32618)!important;border-color:#ffd24a!important;color:#fff!important;box-shadow:0 0 0 0 rgba(255,157,0,.55);animation:barukiPromoPulse 1.8s ease-in-out infinite}
+#categories .cat.promo-cat.active{background:linear-gradient(160deg,#ffb000,#f32618)!important;border-color:#fff!important}
+#categories .cat.promo-cat .promo-emoji{display:flex!important;align-items:center;justify-content:center;width:100%;height:82px;flex:0 0 82px;font-size:48px;line-height:1;border-radius:10px;background:rgba(0,0,0,.28);filter:drop-shadow(0 0 8px rgba(255,220,80,.7))}
+#categories .cat.promo-cat .category-label{text-transform:uppercase;letter-spacing:.4px}
+@keyframes barukiPromoPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,157,0,.55)}50%{box-shadow:0 0 0 7px rgba(255,157,0,0)}}
+@media(max-width:600px){#categories .cat.promo-cat .promo-emoji{height:72px;flex-basis:72px;font-size:40px}}
+@media(prefers-reduced-motion:reduce){#categories .cat.promo-cat{animation:none}}
+</style>
 </head>
 <body>
 <!-- TELA DE MANUTENÇÃO BARUKI (no início da página para aparecer imediatamente) -->
@@ -2042,6 +2052,220 @@ html.baruki-banners-pendente #barukiAvisoImagemRemoto,html.baruki-banners-penden
     </div>
   </div>
 </div>
+<!-- ===== PAINEL DE CONTROLE: lê a aba "Controle" da planilha e liga/desliga cada recurso (bloco adicionado) ===== -->
+<style id="baruki-controle-style">
+html.ctl-aviso1-off #barukiAvisoImagemRemoto,
+html.ctl-aviso2-off #barukiSegundoAvisoImagemRemoto{display:none!important}
+html.ctl-banners-off .baruki-banner-wrap{display:none!important}
+html.ctl-sobe-off #barukiRodapeBanner,html.ctl-sobe-off #barukiRodapeEspaco{display:none!important}
+html.ctl-sobe-off body.baruki-rodape-ativo nav.bottom{transform:none!important}
+html.ctl-logo-off #categories .cat .category-image{display:none!important}
+html.ctl-logo-off #categories .cat{min-height:52px!important}
+html.ctl-natal-off .nat-frame{display:none!important}
+html.ctl-natal-off body.nat-on{padding-top:0!important;padding-left:0!important;padding-right:0!important}
+#categories .cat .cat-emoji{display:flex!important;align-items:center;justify-content:center;font-size:44px;line-height:1;background:#111!important}
+@media(max-width:600px){#categories .cat .cat-emoji{font-size:38px}}
+</style>
+<script id="baruki-controle-script">
+/* Aba "Controle" da mesma planilha do cardápio. Colunas: RECURSO | STATUS | SITUAÇÃO | CHAVE.
+   STATUS = ATIVADO / DESATIVADO. Cada chave age só no seu recurso.
+   Se a aba não carregar, nada muda: o site segue como está (usa o último estado salvo no aparelho). */
+(function(){
+  'use strict';
+  var SHEET_ID='1_G8UW_PYJ2T2GuolYMnn0_LuMYE1YqBOrBGa_4ZBcyA';
+  var SHEET_TAB='Controle';
+  var URL_CSV='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(SHEET_TAB);
+  var CACHE_KEY='baruki_controle_cache_v3';
+  var KEYS=['loja','aviso_1','aviso_2','banners','banner_1','banner_2','banner_3','banner_4','banner_5','banner_6','banner_7','banner_8','natal','manutencao','logo_categorias','banner_sobe','promocao','atualizar_site'];
+  var state={},last='',busy=false,manutApplied=null,remoteStatus=null,R=document.documentElement;
+
+  function plain(s){return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();}
+  function parseCSV(t){
+    var rows=[],row=[],cur='',q=false,i,c;
+    for(i=0;i<t.length;i++){c=t[i];
+      if(q){if(c==='"'){if(t[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+      else if(c==='"')q=true;
+      else if(c===','){row.push(cur);cur='';}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(c!=='\r')cur+=c;
+    }
+    if(cur!==''||row.length){row.push(cur);rows.push(row);}
+    return rows;
+  }
+  /* ===== Agenda AUTOMÁTICO calculada aqui, no horário de Brasília =====
+     (não depende do recálculo da planilha nem do fuso configurado nela) */
+  function brNow(){
+    var p={};
+    try{
+      new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',weekday:'short'})
+        .formatToParts(new Date()).forEach(function(x){p[x.type]=x.value;});
+    }catch(e){var d=new Date();p={year:d.getFullYear(),month:d.getMonth()+1,day:d.getDate(),hour:d.getHours(),minute:d.getMinutes(),weekday:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]};}
+    var wd={Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:7}[p.weekday]||1;
+    return {y:+p.year,m:+p.month,d:+p.day,min:(+p.hour%24)*60+(+p.minute),wd:wd};
+  }
+  function parseTime(v){
+    var m=String(v==null?'':v).trim().match(/^(\d{1,2})(?:[:hH](\d{2}))?(?::\d{2})?\s*([AaPp][Mm])?$/);
+    if(!m)return null;
+    var h=+m[1],mi=+(m[2]||0),ap=(m[3]||'').toUpperCase();
+    if(ap==='PM'&&h<12)h+=12;if(ap==='AM'&&h===12)h=0;
+    if(h>24||mi>59)return null;
+    return (h%24)*60+mi;
+  }
+  function parseDate(v){
+    var t=String(v==null?'':v).trim(),m;
+    if((m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/))){var y=+m[3];if(y<100)y+=2000;return new Date(Date.UTC(y,+m[2]-1,+m[1]));}
+    if((m=t.match(/^(\d{4})-(\d{2})-(\d{2})/)))return new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
+    return null;
+  }
+  function autoState(r,c){
+    var abre=parseTime(r[c.abre]),fecha=parseTime(r[c.fecha]);
+    var n=brNow(),opDay=Date.UTC(n.y,n.m-1,n.d),wd=n.wd;
+    if(abre!==null&&fecha!==null&&abre>fecha&&n.min<fecha){opDay-=86400000;wd=wd===1?7:wd-1;} /* madrugada ainda é o "dia" anterior */
+    var di=parseDate(r[c.ini]),df=parseDate(r[c.fim]);
+    if(di&&opDay<di.getTime())return false;
+    if(df&&opDay>df.getTime())return false;
+    var ov=plain(r[c.dias0+wd-1]);
+    if(ov==='ATIVADO')return true;
+    if(ov==='DESATIVADO')return false;
+    if(abre===null||fecha===null)return undefined; /* sem horário: vale a regra padrão do site */
+    var g=plain(r[c.preset]);
+    var okDia=g===''||g==='TODOS OS DIAS'||(g==='SEG A SEX'&&wd<=5)||(g==='TER A SAB'&&wd>=2&&wd<=6)||(g==='SEG A SAB'&&wd<=6)||(g==='SAB E DOM'&&wd>=6);
+    if(!okDia)return false;
+    return abre<fecha?(n.min>=abre&&n.min<fecha):(n.min>=abre||n.min<fecha);
+  }
+  function findCols(rows){
+    var c={status:1,abre:4,fecha:5,preset:6,final:7,dias0:9,ini:16,fim:17,known:false};
+    for(var i=0;i<rows.length;i++){
+      var h=rows[i].map(plain);
+      if(h.indexOf('CHAVE')>-1&&h.indexOf('STATUS')>-1){
+        c.status=h.indexOf('STATUS');
+        if(h.indexOf('ABRE')>-1)c.abre=h.indexOf('ABRE');
+        if(h.indexOf('FECHA')>-1)c.fecha=h.indexOf('FECHA');
+        if(h.indexOf('DIAS')>-1)c.preset=h.indexOf('DIAS');
+        if(h.indexOf('STATUS FINAL')>-1)c.final=h.indexOf('STATUS FINAL');
+        if(h.indexOf('SEG')>-1)c.dias0=h.indexOf('SEG');
+        if(h.indexOf('DATA INICIO')>-1)c.ini=h.indexOf('DATA INICIO');
+        if(h.indexOf('DATA FIM')>-1)c.fim=h.indexOf('DATA FIM');
+        c.known=true;break;
+      }
+    }
+    return c;
+  }
+  function boolOf(t){
+    t=plain(t);
+    if(t==='ATIVADO'||t==='ATIVADA'||t==='ATIVO'||t==='ON'||t==='SIM'||t==='LIGADO')return true;
+    if(t==='DESATIVADO'||t==='DESATIVADA'||t==='INATIVO'||t==='OFF'||t==='NAO'||t==='DESLIGADO')return false;
+    return undefined;
+  }
+  function parseState(csv){
+    var out={},n=0,rows=parseCSV(csv),c=findCols(rows);
+    rows.forEach(function(r){
+      var k=null,v,i,t;
+      for(i=0;i<r.length&&k===null;i++){t=String(r[i]||'').trim().toLowerCase();if(KEYS.indexOf(t)>-1)k=t;}
+      if(k===null||typeof out[k]==='boolean')return;
+      v=boolOf(r[c.status]);
+      if(v===undefined&&plain(r[c.status])==='AUTOMATICO'){
+        try{v=autoState(r,c);}catch(e){v=undefined;}
+        if(v===undefined)v=boolOf(r[c.final]); /* sem horário: usa o STATUS FINAL que a planilha calculou */
+      }
+      if(v===undefined&&plain(r[c.status])==='')v=boolOf(r[c.final]);
+      if(typeof v==='boolean'){out[k]=v;n++;}
+    });
+    return n>=4?out:null; /* proteção: aba ausente/incompleta não muda nada */
+  }
+  function has(k){return typeof state[k]==='boolean';}
+
+  /* API usada pelos pontos de ligação nos blocos existentes */
+  window.BarukiControle={
+    has:has,
+    get:function(k){return has(k)?state[k]:null;},
+    bannerOff:function(i){return state.banners===false||state['banner_'+(i+1)]===false;},
+    manutOff:function(){return state.manutencao===false;},
+    promoOff:function(){return state.promocao===false;},
+    reload:function(){busy=false;load();},
+    all:function(){return Object.assign({},state);}
+  };
+
+  /* LOJA: ATIVADO = aberta, DESATIVADO = fechada. Sem valor na planilha, vale a regra de antes (links remotos / horário). */
+  try{
+    Object.defineProperty(window,'BarukiRemoteStoreStatus',{configurable:true,enumerable:true,
+      get:function(){return typeof state.loja==='boolean'?state.loja:remoteStatus;},
+      set:function(v){remoteStatus=v;}});
+  }catch(e){console.warn('[Controle] loja:',e);}
+
+  function natal(on){
+    if(!document.body)return false;
+    var f=document.querySelector('.nat-frame');
+    if(on){
+      if(!f){f=document.createElement('div');f.className='nat-frame';f.setAttribute('aria-hidden','true');f.innerHTML='<i class="t"></i><i class="l"></i><i class="r"></i>';document.body.appendChild(f);}
+      document.body.classList.add('nat-on');
+    }else{
+      if(f&&f.parentNode)f.parentNode.removeChild(f);
+      document.body.classList.remove('nat-on');
+    }
+    return true;
+  }
+  function manut(){
+    var v=state.manutencao;
+    if(typeof v!=='boolean'||manutApplied===v||typeof window.testeManutencao!=='function')return;
+    if(v){
+      var lib=false;try{lib=sessionStorage.getItem('baruki_manutencao_liberada')==='1';}catch(e){}
+      if(!lib)window.testeManutencao(true);   /* quem já entrou com o login de teste continua passando */
+    }else window.testeManutencao(false);
+    manutApplied=v;
+  }
+  function flag(c,off){R.classList.toggle(c,off===true);}
+
+  function apply(prev){
+    flag('ctl-aviso1-off',state.aviso_1===false);
+    flag('ctl-aviso2-off',state.aviso_2===false);
+    flag('ctl-banners-off',state.banners===false);
+    flag('ctl-sobe-off',state.banner_sobe===false);
+    flag('ctl-logo-off',state.logo_categorias===false);
+    flag('ctl-natal-off',state.natal===false);
+    if(has('natal'))natal(state.natal===true);
+    try{manut();}catch(e){console.error('[Controle] manutenção',e);}
+    if(prev){
+      if(prev.loja!==state.loja&&typeof window.updateStatus==='function'){try{window.updateStatus();}catch(e){}}
+      var bn=['banners','banner_1','banner_2','banner_3','banner_4','banner_5','banner_6','banner_7','banner_8'].some(function(k){return prev[k]!==state[k];});
+      if(bn){try{document.dispatchEvent(new Event('visibilitychange'));}catch(e){}} /* os banners se atualizam na hora */
+    }
+  }
+  function set(next){
+    var prev=state;state=next;
+    try{apply(prev);}catch(e){console.error('[Controle] erro ao aplicar',e);}
+    try{document.dispatchEvent(new CustomEvent('baruki:controle',{detail:{prev:prev,state:next}}));}catch(e){}
+  }
+
+  try{var saved=localStorage.getItem(CACHE_KEY);if(saved){var s=JSON.parse(saved);if(s&&typeof s==='object')state=s;}}catch(e){}
+  try{apply(null);}catch(e){}
+  document.addEventListener('DOMContentLoaded',function(){try{apply(null);}catch(e){}});
+  window.addEventListener('load',function(){try{apply(null);}catch(e){}});
+
+  function load(){
+    if(busy||document.hidden)return;
+    busy=true;
+    fetch(URL_CSV+'&_='+Date.now(),{cache:'no-store'}).then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.text();
+    }).then(function(csv){
+      var n=parseState(csv);   /* sempre recalcula: o AUTOMÁTICO depende do relógio */
+      if(!n){console.warn('[Controle] aba "Controle" não encontrada ou incompleta — mantendo o estado atual.');return;}
+      var sig=JSON.stringify(n);
+      if(csv===last&&sig===JSON.stringify(state)){try{apply(null);}catch(e){}return;}
+      last=csv;
+      try{localStorage.setItem(CACHE_KEY,JSON.stringify(n));}catch(e){}
+      set(n);
+    }).catch(function(e){console.warn('[Controle] não foi possível carregar — mantendo o estado atual.',e);})
+      .then(function(){busy=false;});
+  }
+  load();
+  setInterval(load,5000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)load();});
+})();
+</script>
+<!-- ===== FIM DO PAINEL DE CONTROLE ===== -->
+
 <script id="baruki-aviso-remoto-script">
 (function(){
   'use strict';
@@ -2092,6 +2316,7 @@ html.baruki-banners-pendente #barukiAvisoImagemRemoto,html.baruki-banners-penden
 
   function bloquearSite(){
     if(testeLiberado())return;
+    if(window.BarukiControle&&window.BarukiControle.manutOff())return; // planilha Controle: manutenção DESATIVADA
     raiz.classList.add('baruki-manut-ativa');
     aviso.classList.add('ativo');
     document.documentElement.style.overflow='hidden';
@@ -4068,7 +4293,7 @@ function getOrderCategory(item){
   return 'lanches';
 }
 function orderCategoryLabel(cat){
-  return ({lanches:'LANCHE',porcoes:'PORÇÃO',pastel:'PASTEL',bebidas:'BEBIDA',pizzas:'PIZZA',cachorro:'CACHORRÃO'})[String(cat||'').toLowerCase()]||'PRODUTO';
+  return ({lanches:'LANCHE',porcoes:'PORÇÃO',pastel:'PASTEL',bebidas:'BEBIDA',pizzas:'PIZZA',cachorro:'CACHORRÃO',promocao:'PROMOÇÃO'})[String(cat||'').toLowerCase()]||'PRODUTO';
 }
 function orderCategoryIcon(item){
   const c=getOrderCategory(item);
@@ -4076,7 +4301,7 @@ function orderCategoryIcon(item){
     const id=item?.product?.id, p=id?products.find(x=>String(x.id)===String(id)):null;
     return (p?.group||item?.product?.group)==='Especiais'?'⭐':(p?.group||item?.product?.group)==='Pizza Doce'?'🍓':'🍕';
   }
-  return ({lanches:'🍔',porcoes:'🍟',pastel:'🥟',bebidas:'🥤',cachorro:'🌭'})[c]||'';
+  return ({lanches:'🍔',porcoes:'🍟',pastel:'🥟',bebidas:'🥤',cachorro:'🌭',promocao:'🔥'})[c]||'';
 }
 function cleanOrderName(v){return String(v||'').replace(/[\r\n]/g,' ').replace(/^[\s]*(?:🍕|🍫|🤍|🌈|🥥|🍒|🍓|⭐|🥟|🌭|🥤|💧|🍺|🍔|🍟|🥞)\s*/u,'').replace(/\*/g,'').trim();}
 function buildOrderMessage(order){
@@ -4457,11 +4682,19 @@ function categoryImageUrl(category){
   const source=categoryImageSources[category]||'';
   return source ? source+'?baruki_v='+Date.now() : '';
 }
+function hasPromoActive(){return products.some(p=>p.cat==='promocao');}
 function renderCategories(){
-  document.getElementById('categories').innerHTML=categories.map(c=>{
+  const catList=(hasPromoActive()?[['promocao','🔥 Promoção']]:[]).concat(categories);
+  document.getElementById('categories').innerHTML=catList.map(c=>{
+    if(c[0]==='promocao'){
+      return '<button type="button" class="cat promo-cat '+(c[0]===currentCategory?'active':'')+'" onclick="selectCategory(\'promocao\')">'+
+      '<span class="promo-emoji" aria-hidden="true">🔥</span><span class="category-label">Promoção</span></button>';
+    }
     const imageUrl=categoryImageUrl(c[0]);
+    const emoji=String(c[1]).split(' ')[0];
+    const media=imageUrl?'<img class="category-image" src="'+imageUrl+'" alt="" loading="eager">':'<span class="category-image cat-emoji" aria-hidden="true">'+emoji+'</span>';
     return '<button type="button" class="cat '+(c[0]===currentCategory?'active':'')+'" onclick="selectCategory(\''+c[0]+'\')">'+
-    '<img class="category-image" src="'+imageUrl+'" alt="" loading="eager"><span class="category-label">'+c[1].replace(/^[^ ]+\s/,'')+'</span></button>';
+    media+'<span class="category-label">'+safeText(String(c[1]).replace(/^[^ ]+\s/,''))+'</span></button>';
   }).join('');
 }
 
@@ -4536,9 +4769,9 @@ function clearMenuSearch(){
 function renderSearchResults(query, box){
   const normalize=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const q=normalize(query);
-  const catNames={lanches:'lanches hamburguer',porcoes:'porcoes batata frita',pastel:'pastel pasteis',bebidas:'bebidas agua refrigerante cerveja',pizzas:'pizza pizzas',cachorro:'cachorro quente cachorrao'};
+  const catNames={lanches:'lanches hamburguer',porcoes:'porcoes batata frita',pastel:'pastel pasteis',bebidas:'bebidas agua refrigerante cerveja',pizzas:'pizza pizzas',cachorro:'cachorro quente cachorrao',promocao:'promocao promocoes oferta combo'};
   const matches=products.filter(p=>{
-    const text=[p.name,p.desc,p.cat,p.group,catNames[p.cat],...(Array.isArray(p.ingredients)?p.ingredients:[])].join(' ');
+    const text=[p.name,p.desc,p.cat,p.group,catNames[p.cat]||(window.barukiCatLabel?window.barukiCatLabel(p.cat):''),...(Array.isArray(p.ingredients)?p.ingredients:[])].join(' ');
     return normalize(text).includes(q);
   });
   box.classList.toggle('pizza-view',matches.some(p=>['pizzas','pastel','bebidas'].includes(p.cat)));
@@ -4551,7 +4784,7 @@ function renderSearchResults(query, box){
     else if(Number(p.price)>0) price=money(p.price);
     const action=isTwo?'pendingCardQty.pizza2sabores=getCardQty(\'pizza2sabores\');showPizzaTwoFlavors()':('addFromProductCard(\''+String(p.id).replace(/\'/g,"\'")+ '\')');
     const label=isTwo?'MONTAR PIZZA':(Number(p.price)>0||p.sizePrices?'ADICIONAR':'VER OPÇÕES');
-    const category=({lanches:'🍔 Lanches',porcoes:'🍟 Porções',pastel:'🥟 Pastéis',bebidas:'🥤 Bebidas',pizzas:'🍕 Pizzas',cachorro:'🌭 Cachorrão'})[p.cat]||'Cardápio';
+    const category=({lanches:'🍔 Lanches',porcoes:'🍟 Porções',pastel:'🥟 Pastéis',bebidas:'🥤 Bebidas',pizzas:'🍕 Pizzas',cachorro:'🌭 Cachorrão',promocao:'🔥 Promoção'})[p.cat]||(window.barukiCatLabel&&window.barukiCatLabel(p.cat))||'Cardápio';
     return '<article class="product baruki-search-product"><div class="baruki-product-category">'+category+(p.group?' · '+safeText(p.group):'')+'</div><h3>'+safeText(p.name)+'</h3><div class="desc">'+safeText(p.desc||'')+'</div><div class="price">'+price+'</div><div class="product-card-actions">'+productCardQty(p.id)+'<button class="add" onclick="'+action+'">'+label+'</button></div></article>';
   }).join('');
 }
@@ -4605,6 +4838,7 @@ function renderProducts(){
     let price='Consulte';
     if(p.sizePrices)price=money(p.price)+' P / '+money(p.priceG)+' G';
     else if(p.price>0)price=money(p.price);
+    if(p.cat==='promocao'&&p.oldPrice>p.price&&p.price>0)price='<s style="opacity:.6;font-size:.8em;font-weight:700">'+money(p.oldPrice)+'</s> '+money(p.price);
     const button=p.price>0||p.sizePrices?'ADICIONAR':'VER OPÇÕES';
     return '<article class="product"><h3>'+safeText(p.name)+'</h3><div class="desc">'+safeText(p.desc)+'</div><div class="price">'+price+'</div><div class="product-card-actions">'+productCardQty(p.id)+'<button class="add" onclick="addFromProductCard(\''+p.id+'\')">'+button+'</button></div></article>';
   }).join('');
@@ -5345,7 +5579,7 @@ function initializeBaruki(){
     barukiTask('produtos',()=>renderProducts());
     barukiTask('pedidos',()=>renderOrders());
     barukiTask('cronômetro de preparo',()=>startPrepTimer());
-    barukiTask('checkout',()=>{enhanceCheckout();updateCheckout()});
+    barukiTask('checkout',()=>{if(typeof enhanceCheckout==='function')enhanceCheckout();updateCheckout()});
     barukiTask('status',()=>{updateStatus()});
     // Sempre entra no cardápio em estado limpo, sem deixar uma tela antiga ativa.
     barukiTask('tela inicial',()=>{
@@ -6483,7 +6717,7 @@ function fecharConfiguracoesBaruki(){
 
       // BANNERS: a cada ciclo, só permanecem os links que realmente carregam imagem.
       const results=await bannersP;
-      const valid=results.filter(Boolean);
+      const valid=results.filter((item,i)=>item&&!(window.BarukiControle&&window.BarukiControle.bannerOff(i))); // planilha Controle
       const previous=[...banners];
       const currentUrl=previous[index]?.url||null;
       const next=[];
@@ -8570,7 +8804,7 @@ body.nat-on{padding-top:14px!important;padding-left:14px!important;padding-right
 (function(){
   /* ---- CONFIGURAÇÃO ---- */
   var NATAL={
-    ativo:true,   /* chave geral: false = desliga o recurso por completo */
+    ativo:!(window.BarukiControle&&window.BarukiControle.has('natal')),   /* chave geral: false = desliga o recurso por completo (a planilha Controle assume quando tem a chave natal) */
     url:'https://www.socialcreator.com/srv/imgs/seccs/335122_ico.png?ts=1794118495', /* imagem "gatilho" */
     intervalo:5000 /* verifica a cada 5 segundos */
   };
@@ -8761,11 +8995,11 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
    Se a planilha não carregar, o cardápio atual continua funcionando.
    ========================================================= */
 (function(){
-  var SHEET_ID='13DxZa01S51bx8vNF5LW1EO-obadwYT5ml36tQ51sIQI';
+  var SHEET_ID='1_G8UW_PYJ2T2GuolYMnn0_LuMYE1YqBOrBGa_4ZBcyA';
   var SHEET_TAB='Cardápio';
   var SHEET_URL='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(SHEET_TAB);
-  var CACHE_KEY='baruki_planilha_cache_v3';
-  var CATS={lanches:'lanches',cachorrao:'cachorro',cachorro:'cachorro',porcoes:'porcoes',bebidas:'bebidas',pizza:'pizzas',pizzas:'pizzas',pasteis:'pastel',pastel:'pastel'};
+  var CACHE_KEY='baruki_planilha_cache_v5';
+  var CATS={promocao:'promocao',promocoes:'promocao',lanches:'lanches',cachorrao:'cachorro',cachorro:'cachorro',porcoes:'porcoes',bebidas:'bebidas',pizza:'pizzas',pizzas:'pizzas',pasteis:'pastel',pastel:'pastel'};
 
   // Aceita variações como "Pizza Doce", "Pizza Salgada", "Pastéis", "Pastel Doce"...
   function resolveCat(raw){
@@ -8775,6 +9009,14 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
     if(/past/.test(n))return {cat:'pastel',hint:/doce/.test(n)?'Doce':/especia/.test(n)?'Super Especial':/dois/.test(n)?'Dois Sabores':/simples/.test(n)?'Simples':''};
     return {cat:undefined,hint:''};
   }
+  /* ===== Categorias novas criadas na planilha (aparecem sozinhas no site) ===== */
+  var DYN={};   /* slug -> rótulo "😀 Nome" */
+  function dynLabel(raw){
+    var t=String(raw||'').replace(/\s+/g,' ').trim(),m=t.match(/^((?:\p{Extended_Pictographic}[\uFE0F\u200D]*)+)\s*(.*)$/u);
+    return m?{emoji:m[1],name:m[2]||t}:{emoji:'',name:t};
+  }
+  function dynSlug(name){return 'x_'+plain(name).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');}
+  window.barukiCatLabel=function(slug){return DYN[slug]||'';};
   function plain(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
   function norm(s){return plain(s).replace(/\s+/g,' ').trim().toUpperCase();}
   function key(cat,name){return cat+'|'+plain(name).toUpperCase().replace(/[^A-Z0-9]/g,'');}
@@ -8797,6 +9039,7 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
     return rows;
   }
 
+  function isOn(v){var n=norm(v);return n==='SIM'||n==='S'||n==='ATIVA'||n==='ATIVO'||n==='1'||n==='TRUE'||n==='VERDADEIRO'||n==='X';}
   function parseMoney(v){
     var s=String(v==null?'':v).replace(/[^\d,.\-]/g,'');
     if(!s)return 0;
@@ -8819,6 +9062,8 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
       else if(h==='INGREDIENTES')col.ing=i;
       else if(h==='DESCRICAO')col.desc=i;
       else if(h==='GRUPO'||h==='SUBCATEGORIA')col.grp=i;
+      else if(h==='ATIVA'||h==='ATIVO'||h==='ATIVAR'||h==='PROMOCAO ATIVA')col.active=i;
+      else if(h.indexOf('PRECO ORIGINAL')===0||h.indexOf('PRECO DE')===0)col.oldPrice=i;
       else if(h==='PRECO G'||h==='PRECO GRANDE')col.priceG=i;
       else if(h.indexOf('PRECO')===0)col.price=i;
     });
@@ -8826,19 +9071,59 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
     var parsed=[];
     for(var r=1;r<rows.length;r++){
       var x=rows[r],name=String(x[col.name]||'').trim();
-      var rc=resolveCat(x[col.cat]),cat=rc.cat;
-      if(!name||!cat)continue;
-      parsed.push({name:name,cat:cat,price:parseMoney(x[col.price]),
+      var rc=resolveCat(x[col.cat]),cat=rc.cat,dl=null;
+      if(!name)continue;
+      if(!cat){
+        dl=dynLabel(x[col.cat]);
+        if(!dl.name)continue;
+        cat=dynSlug(dl.name);
+        if(cat==='x_')continue;
+      }
+      parsed.push({dl:dl,raw:String(x[col.cat]||'').trim(),name:name,cat:cat,price:parseMoney(x[col.price]),
         priceG:col.priceG!=null?parseMoney(x[col.priceG]):0,
         ing:col.ing!=null?String(x[col.ing]||'').trim():'',
         desc:col.desc!=null?String(x[col.desc]||'').trim():'',
+        oldPrice:col.oldPrice!=null?parseMoney(x[col.oldPrice]):0,
+        on:col.active==null?true:isOn(x[col.active]),
+        off:col.active!=null&&['NAO','N','0','FALSE','FALSO','INATIVA','INATIVO'].indexOf(norm(x[col.active]))>-1,
         grp:(col.grp!=null?String(x[col.grp]||'').trim():'')||rc.hint});
     }
     if(parsed.length<10)return false; // proteção: planilha vazia/incompleta não apaga o cardápio
     var byKey={};
     products.forEach(function(p){byKey[key(p.cat,p.name)]=p;});
     var added=0;
+    // PROMOÇÕES: refeitas a cada leitura. Linha com Categoria "Promoção" e Ativa = SIM entra;
+    // se nenhuma estiver ativa, a categoria some e o cardápio segue normal.
+    var promoOff=false;try{promoOff=!!(window.BarukiControle&&window.BarukiControle.promoOff());}catch(e){}
+    for(var k=products.length-1;k>=0;k--){if(products[k].cat==='promocao'||String(products[k].cat).indexOf('x_')===0)products.splice(k,1);}
+    parsed.forEach(function(d,n){
+      if(promoOff||d.cat!=='promocao'||!d.on||!(d.price>0))return;
+      products.push({id:'promo_'+n+'_'+key('',d.name).slice(1,12),cat:'promocao',name:d.name,price:d.price,oldPrice:d.oldPrice,
+        desc:d.desc||d.ing,ingredients:[],group:'',sizePrices:false});
+    });
+    /* categorias novas: refeitas a cada leitura, na ordem em que aparecem na planilha */
+    for(var q=categories.length-1;q>=0;q--){if(String(categories[q][0]).indexOf('x_')===0)categories.splice(q,1);}
+    DYN={};var dupe={};
     parsed.forEach(function(d){
+      if(d.cat.indexOf('x_')!==0||!d.dl)return;
+      var emo=d.dl.emoji;
+      if(!DYN[d.cat]){DYN[d.cat]={emoji:emo,name:d.dl.name};}
+      else if(!DYN[d.cat].emoji&&emo)DYN[d.cat].emoji=emo;
+    });
+    parsed.forEach(function(d){
+      if(d.cat.indexOf('x_')!==0||!d.dl||d.off||!(d.price>=0))return;
+      if(!DYN[d.cat].emoji){var m=d.name.match(/^((?:\p{Extended_Pictographic}[\uFE0F\u200D]*)+)/u);if(m)DYN[d.cat].emoji=m[1];}
+      var kk=key(d.cat,d.name);dupe[kk]=(dupe[kk]||0)+1;
+      products.push({id:'planilha_'+d.cat+'_'+kk.split('|')[1].slice(0,24)+(dupe[kk]>1?'_'+dupe[kk]:''),cat:d.cat,name:d.name,price:d.price,
+        desc:d.desc,ingredients:splitIngredients(d.ing),group:'',sizePrices:false});
+    });
+    Object.keys(DYN).forEach(function(slug){
+      if(!products.some(function(p){return p.cat===slug;})){delete DYN[slug];return;}
+      DYN[slug]=(DYN[slug].emoji||'🍽️')+' '+DYN[slug].name;
+      categories.push([slug,DYN[slug]]);
+    });
+    parsed.forEach(function(d){
+      if(d.cat==='promocao'||d.cat.indexOf('x_')===0)return;
       var p=byKey[key(d.cat,d.name)];
       if(!p){
         // produto novo: só entra onde não precisa de grupo (lanches, cachorrão, porções)
@@ -8861,7 +9146,29 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
     return true;
   }
 
+  var promoShown=false;
+  function syncPromoCategory(){
+    try{
+      var has=hasPromoActive();
+      if(has===promoShown)return;
+      promoShown=has;
+      if(!has&&currentCategory==='promocao')currentCategory='lanches';
+      renderCategories();
+    }catch(e){console.error('[Planilha] erro na categoria de promoção',e);}
+  }
+  var catSig='';
+  function syncCategories(){
+    try{
+      var sig=categories.map(function(c){return c[0]+c[1];}).join('|');
+      if(sig===catSig)return;
+      catSig=sig;
+      if(currentCategory.indexOf('x_')===0&&!categories.some(function(c){return c[0]===currentCategory;}))currentCategory='lanches';
+      renderCategories();
+    }catch(e){console.error('[Planilha] erro nas categorias',e);}
+  }
   function refresh(){
+    syncCategories();
+    syncPromoCategory();
     try{
       var menu=document.getElementById('menu');
       if(!menu||menu.classList.contains('active')){
@@ -8900,46 +9207,371 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
   load();
   setInterval(load,5000);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)load();});
+  /* a chave "Promoções (geral)" da aba Controle liga/desliga as promoções na hora */
+  document.addEventListener('baruki:controle',function(ev){
+    var a=ev.detail&&ev.detail.prev,b=ev.detail&&ev.detail.state;
+    if(!last||!a||!b||a.promocao===b.promocao)return;
+    try{if(apply(last))refresh();}catch(e){console.error('[Planilha] promoção',e);}
+  });
 })();
 </script>
-<style id="baruki-resumo-pizza-amarelo-laranja">
-/* Resumo da pizza G (2 sabores) — visual amarelo/laranja. Somente CSS. */
-#twoFlavorTotal{
-  border:2px solid transparent!important;
-  border-radius:18px!important;
-  background-image:linear-gradient(160deg,#1a1208,#0a0a0a),linear-gradient(135deg,#ffd54a,#ff8a00,#ff5a00)!important;
-  background-origin:border-box!important;
-  background-clip:padding-box,border-box!important;
-  background-color:transparent!important;
-  box-shadow:0 8px 26px rgba(255,140,0,.25),0 0 0 1px rgba(255,213,74,.08)!important;
-  padding:12px 14px!important;
-}
-#twoFlavorTotal>.row:not(.total){
-  color:#f4f4f4!important;
-  border-bottom:1px solid rgba(255,170,40,.28)!important;
-}
-#twoFlavorTotal>.row:not(.total)>strong{
-  color:#ffd54a!important;-webkit-text-fill-color:#ffd54a!important;
-  text-shadow:0 0 8px rgba(255,213,74,.25)!important;
-}
-#twoFlavorTotal>.total{
-  background:linear-gradient(135deg,#ff5a00,#ff9d00 60%,#ffd54a)!important;
-  border-radius:14px!important;
-  padding:12px 14px!important;
-  margin:10px 0 0!important;
-  box-shadow:0 6px 18px rgba(255,120,0,.35),inset 0 1px 0 rgba(255,255,255,.35)!important;
-}
-#twoFlavorTotal>.total>span{
-  color:#fff!important;-webkit-text-fill-color:#fff!important;
-  text-shadow:0 1px 3px rgba(0,0,0,.45)!important;letter-spacing:.5px!important;
-}
-#twoFlavorTotal>.total>strong{
-  color:#1a0d00!important;-webkit-text-fill-color:#1a0d00!important;
-  font-size:22px!important;font-weight:950!important;-webkit-text-stroke:0!important;text-shadow:none!important;
-}
-body.day-theme #twoFlavorTotal>.row:not(.total){color:#f4f4f4!important}
-body.day-theme #twoFlavorTotal>.total>span{color:#fff!important}
-@media(max-width:480px){#twoFlavorTotal>.total>strong{font-size:20px!important}}
+<!-- PROMOÇÃO no novo modelo (adicionado): aparece dentro da categoria Promoção -->
+<style id="baruki-promo-banner-style">
+#barukiPromoBanner{grid-column:1/-1;margin:0 0 6px;padding:14px 12px 12px;border-radius:22px;border:1px solid #ffd24a;
+background:linear-gradient(135deg,#ff9d00 0%,#ff6a00 45%,#f32618 100%);box-shadow:0 8px 24px rgba(243,38,24,.35);color:#fff;box-sizing:border-box;overflow:hidden}
+#barukiPromoBanner.stack .bpb-row{flex-direction:column;overflow:visible}#barukiPromoBanner.stack .bpb-card{flex-basis:auto;max-width:none;width:100%}
+#barukiPromoBanner .bpb-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+#barukiPromoBanner .bpb-fire{font-size:38px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+#barukiPromoBanner .bpb-titles{flex:1;min-width:0}
+#barukiPromoBanner .bpb-title{font-size:26px;font-weight:900;letter-spacing:.5px;line-height:1;text-transform:uppercase}
+#barukiPromoBanner .bpb-sub{font-size:13px;font-weight:700;color:#ffe9a8;margin-top:3px}
+#barukiPromoBanner .bpb-all{flex:0 0 auto;border:2px solid #ffe9a8;background:rgba(160,40,0,.55);color:#fff;font-weight:800;font-size:14px;padding:9px 14px;border-radius:999px;cursor:pointer;font-family:inherit}
+#barukiPromoBanner .bpb-row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none}
+#barukiPromoBanner .bpb-row::-webkit-scrollbar{display:none}
+#barukiPromoBanner .bpb-card{position:relative;flex:0 0 78%;max-width:340px;scroll-snap-align:start;box-sizing:border-box;background:#1a0d0a;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px}
+#barukiPromoBanner .bpb-row.single .bpb-card{flex-basis:100%;max-width:none}
+#barukiPromoBanner .bpb-name{font-size:18px;font-weight:900;color:#ffd166;text-transform:uppercase;line-height:1.15;}
+#barukiPromoBanner .bpb-desc{font-size:14px;color:#f1e6df;line-height:1.35;min-height:2.7em}
+#barukiPromoBanner .bpb-badge{position:absolute;top:12px;right:12px;background:#ffd24a;color:#7a1b00;font-weight:900;font-size:13px;padding:5px 10px;border-radius:999px}
+#barukiPromoBanner .bpb-prices{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:auto}
+#barukiPromoBanner .bpb-old{font-size:15px;font-weight:700;color:#9a8d86;text-decoration:line-through}
+#barukiPromoBanner .bpb-new{font-size:30px;font-weight:900;color:#5dff8a;line-height:1}
+#barukiPromoBanner .bpb-buy{border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:900;color:#fff;cursor:pointer;font-family:inherit;text-transform:uppercase;background:linear-gradient(180deg,#2ad564,#139a47);box-shadow:0 3px 10px rgba(0,0,0,.35)}
+#barukiPromoBanner .bpb-buy:active{transform:scale(.98)}
+@media(max-width:480px){#barukiPromoBanner .bpb-title{font-size:23px}#barukiPromoBanner .bpb-new{font-size:27px}}
 </style>
+<script id="baruki-promo-banner-script">
+(function(){
+  var stack=false;
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function fmt(v){try{return money(v);}catch(e){return 'R$ '+Number(v).toFixed(2).replace('.',',');}}
+  function html(list){
+    var cards=list.map(function(p){
+      var off=p.oldPrice>p.price?Math.round((p.oldPrice-p.price)/p.oldPrice*100):0;
+      return '<article class="bpb-card">'+
+        '<div class="bpb-name">🔥 '+esc(p.name)+'</div><div class="bpb-desc">'+esc(p.desc)+'</div>'+
+        '<div class="bpb-prices">'+(p.oldPrice>p.price?'<span class="bpb-old">'+fmt(p.oldPrice)+'</span>':'')+'<span class="bpb-new">'+fmt(p.price)+'</span></div>'+
+        '<button type="button" class="bpb-buy" data-id="'+esc(p.id)+'">Quero essa!</button></article>';
+    }).join('');
+    return '<section id="barukiPromoBanner" class="'+(stack?'stack':'')+'" aria-label="Promoções"><div class="bpb-head"><span class="bpb-fire" aria-hidden="true">🔥</span>'+
+      '<div class="bpb-titles"><div class="bpb-title">Promoção</div><div class="bpb-sub">Aproveite enquanto durar!</div></div>'+
+      (list.length>1?'<button type="button" class="bpb-all">'+(stack?'‹ Recolher':'Ver tudo ›')+'</button>':'')+'</div>'+
+      '<div class="bpb-row'+(list.length===1?' single':'')+'">'+cards+'</div></section>';
+  }
+  // Só desvia a exibição da categoria Promoção; todas as outras categorias usam a função original.
+  var orig=window.renderProducts;
+  if(typeof orig!=='function'){console.error('[Promoção] renderProducts não encontrada');return;}
+  window.renderProducts=function(){
+    try{
+      var q=document.getElementById('barukiMenuSearch');
+      var query=q&&q.value&&q.value.trim();
+      if(!query&&currentCategory==='promocao'){
+        var box=document.getElementById('products');
+        var list=products.filter(function(p){return p&&p.cat==='promocao'&&p.price>0;});
+        if(box&&list.length){box.classList.remove('pizza-view');box.innerHTML=html(list);return;}
+      }
+    }catch(e){console.error('[Promoção]',e);}
+    return orig.apply(this,arguments);
+  };
+  document.addEventListener('click',function(ev){
+    var t=ev.target.closest?ev.target:null;if(!t)return;
+    var buy=t.closest('#barukiPromoBanner .bpb-buy');
+    if(buy){try{addFromProductCard(buy.getAttribute('data-id'));}catch(e){console.error(e);}return;}
+    if(t.closest('#barukiPromoBanner .bpb-all')){stack=!stack;window.renderProducts();}
+  });
+})();
+</script>
+<!-- CHAMA no 🔥 da categoria Promoção (adicionado): o próprio emoji se mexe como fogo, só visual -->
+<style id="baruki-chama-style">
+#categories .cat.promo-cat .promo-emoji .chama{position:relative;display:inline-block;line-height:1;transform-origin:50% 92%;
+  animation:barukiChama 1.15s ease-in-out infinite;will-change:transform,filter}
+#categories .cat.promo-cat .promo-emoji .chama::before,#categories .cat.promo-cat .promo-emoji .chama::after{
+  content:attr(data-e);position:absolute;left:0;top:0;width:100%;text-align:center;pointer-events:none;transform-origin:50% 92%}
+#categories .cat.promo-cat .promo-emoji .chama::before{opacity:.55;filter:hue-rotate(-18deg) saturate(1.5) brightness(1.15) blur(.4px);animation:barukiChamaB .8s ease-in-out infinite}
+#categories .cat.promo-cat .promo-emoji .chama::after{opacity:.45;filter:hue-rotate(22deg) saturate(1.4) brightness(1.3) blur(.6px);animation:barukiChamaC 1.45s ease-in-out infinite}
+@keyframes barukiChama{
+  0%{transform:perspective(220px) rotateY(-10deg) scale(1,1) skewX(0) rotate(0);filter:brightness(1) drop-shadow(0 0 7px rgba(255,150,0,.8))}
+  15%{transform:perspective(220px) rotateY(-4deg) scale(.95,1.09) skewX(-4deg) rotate(-2.5deg);filter:brightness(1.15) drop-shadow(0 0 12px rgba(255,190,30,1))}
+  32%{transform:perspective(220px) rotateY(8deg) scale(1.04,.96) skewX(3deg) rotate(2deg);filter:brightness(.95) drop-shadow(0 0 6px rgba(255,110,0,.75))}
+  50%{transform:perspective(220px) rotateY(12deg) scale(.94,1.13) skewX(4deg) rotate(2.5deg);filter:brightness(1.2) drop-shadow(0 0 14px rgba(255,200,40,1))}
+  68%{transform:perspective(220px) rotateY(2deg) scale(1.03,1) skewX(-3deg) rotate(-1.5deg);filter:brightness(1) drop-shadow(0 0 8px rgba(255,140,0,.85))}
+  85%{transform:perspective(220px) rotateY(-8deg) scale(.97,1.08) skewX(2deg) rotate(-2deg);filter:brightness(1.1) drop-shadow(0 0 11px rgba(255,170,20,.95))}
+  100%{transform:perspective(220px) rotateY(-10deg) scale(1,1) skewX(0) rotate(0);filter:brightness(1) drop-shadow(0 0 7px rgba(255,150,0,.8))}
+}
+@keyframes barukiChamaB{
+  0%,100%{transform:translateY(-2px) scale(.9,1.12) skewX(3deg) rotate(2deg)}
+  30%{transform:translateY(-4px) scale(.84,1.2) skewX(-4deg) rotate(-3deg)}
+  60%{transform:translateY(-2px) scale(.92,1.1) skewX(5deg) rotate(3deg)}
+}
+@keyframes barukiChamaC{
+  0%,100%{transform:translateY(-3px) scale(.8,1.18) skewX(-3deg) rotate(-2deg)}
+  40%{transform:translateY(-6px) scale(.72,1.28) skewX(4deg) rotate(3deg)}
+  70%{transform:translateY(-3px) scale(.82,1.15) skewX(-5deg) rotate(-3deg)}
+}
+@media(prefers-reduced-motion:reduce){#categories .cat.promo-cat .promo-emoji .chama,#categories .cat.promo-cat .promo-emoji .chama::before,#categories .cat.promo-cat .promo-emoji .chama::after{animation:none}}
+</style>
+<script id="baruki-chama-script">
+(function(){
+  function wrap(){
+    document.querySelectorAll('#categories .cat.promo-cat .promo-emoji').forEach(function(b){
+      if(b.querySelector('.chama'))return;
+      var e=(b.textContent||'🔥').trim()||'🔥';
+      b.innerHTML='<span class="chama" data-e="'+e+'">'+e+'</span>';
+    });
+  }
+  var c=document.getElementById('categories');
+  if(c)new MutationObserver(wrap).observe(c,{childList:true});
+  wrap();setInterval(wrap,2000);
+})();
+</script>
+
+<!-- ===== PAINEL DO DONO (abre só com #painel no endereço) ===== -->
+<style id="baruki-painel-style">
+#barukiPainel{position:fixed;inset:0;z-index:2147483000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#barukiPainel.on{display:flex}
+#barukiPainel .bp-box{width:100%;max-width:520px;max-height:92vh;overflow:auto;background:#141414;color:#fff;border:1px solid #3a3a3a;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.6);font-family:inherit}
+#barukiPainel .bp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+#barukiPainel h2{margin:0;font-size:20px;font-weight:900}
+#barukiPainel .bp-x{border:0;background:#2a2a2a;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer}
+#barukiPainel .bp-sub{color:#a3a3a3;font-size:13px;margin:0 0 14px}
+#barukiPainel .bp-item{background:#1d1d1d;border:1px solid #2f2f2f;border-radius:16px;padding:12px;margin-bottom:10px}
+#barukiPainel .bp-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+#barukiPainel .bp-name{font-weight:800;font-size:15px}
+#barukiPainel .bp-now{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:#333;color:#ccc}
+#barukiPainel .bp-now.on{background:#14532d;color:#86efac}#barukiPainel .bp-now.off{background:#7f1d1d;color:#fecaca}
+#barukiPainel .bp-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#barukiPainel .bp-btn{border:2px solid #3a3a3a;background:#262626;color:#fff;border-radius:12px;padding:12px 4px;font-weight:900;font-size:13px;cursor:pointer;font-family:inherit;min-height:46px}
+#barukiPainel .bp-btn:active{transform:scale(.97)}
+#barukiPainel .bp-btn[data-s="ATIVADO"]{border-color:#16a34a}#barukiPainel .bp-btn[data-s="DESATIVADO"]{border-color:#dc2626}#barukiPainel .bp-btn[data-s="AUTOMÁTICO"]{border-color:#2563eb}
+#barukiPainel .bp-btn[disabled]{opacity:.55}
+#barukiPainel .bp-msg{min-height:20px;font-size:13px;font-weight:700;margin:6px 2px 0;color:#a3a3a3}
+#barukiPainel .bp-msg.ok{color:#86efac}#barukiPainel .bp-msg.err{color:#fca5a5}
+#barukiPainel .bp-link{background:none;border:0;color:#9ca3af;text-decoration:underline;font-size:12px;cursor:pointer;padding:8px 0;font-family:inherit}
+</style>
+<script id="baruki-painel-script">
+(function(){
+  'use strict';
+  /* Cole aqui o endereço do Apps Script (veja o arquivo apps_script_painel.gs). Vazio = painel só mostra o estado. */
+  var APPS_SCRIPT_URL='';
+  var ITENS=[['loja','🏪 Loja (aberta / fechada)'],['promocao','🔥 Promoções'],['banners','🖼️ Banners'],['natal','🎄 Função Natal'],['manutencao','🛠️ Manutenção']];
+  var KEY_STORE='baruki_painel_chave',box=null,msg=null;
+
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function getKey(ask){
+    var k='';try{k=localStorage.getItem(KEY_STORE)||'';}catch(e){}
+    if(!k&&ask){k=(window.prompt('Digite a senha do painel:')||'').trim();if(k){try{localStorage.setItem(KEY_STORE,k);}catch(e){}}}
+    return k;
+  }
+  function say(t,cls){if(msg){msg.textContent=t||'';msg.className='bp-msg'+(cls?' '+cls:'');}}
+  function draw(){
+    if(!box)return;
+    var st=(window.BarukiControle&&window.BarukiControle.all&&window.BarukiControle.all())||{};
+    box.querySelector('.bp-list').innerHTML=ITENS.map(function(it){
+      var v=st[it[0]],cls=v===true?'on':v===false?'off':'',txt=v===true?'LIGADO':v===false?'DESLIGADO':'PADRÃO DO SITE';
+      return '<div class="bp-item"><div class="bp-row"><span class="bp-name">'+esc(it[1])+'</span><span class="bp-now '+cls+'">'+txt+'</span></div>'+
+        '<div class="bp-btns">'+['ATIVADO','DESATIVADO','AUTOMÁTICO'].map(function(s){
+          return '<button type="button" class="bp-btn" data-k="'+it[0]+'" data-s="'+s+'">'+(s==='ATIVADO'?'LIGAR':s==='DESATIVADO'?'DESLIGAR':'AUTOMÁTICO')+'</button>';
+        }).join('')+'</div></div>';
+    }).join('');
+  }
+  function send(chave,status,btn){
+    if(!APPS_SCRIPT_URL){say('Falta ligar o painel à planilha (veja o arquivo apps_script_painel.gs).','err');return;}
+    var key=getKey(true);if(!key){say('Senha não informada.','err');return;}
+    var all=box.querySelectorAll('.bp-btn');all.forEach(function(b){b.disabled=true;});
+    say('Salvando...');
+    fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:key,chave:chave,status:status})})
+      .then(function(r){return r.json();})
+      .then(function(j){
+        if(j&&j.ok){say('Salvo ✔ — o site atualiza em instantes.','ok');try{window.BarukiControle.reload();}catch(e){}setTimeout(draw,1800);setTimeout(draw,6000);}
+        else{if(j&&/senha/i.test(j.erro||'')){try{localStorage.removeItem(KEY_STORE);}catch(e){}}say((j&&j.erro)||'Não foi possível salvar.','err');}
+      })
+      .catch(function(){say('Sem conexão com a planilha. Tente de novo.','err');})
+      .then(function(){all.forEach(function(b){b.disabled=false;});});
+  }
+  function build(){
+    if(box)return;
+    box=document.createElement('div');box.id='barukiPainel';box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label','Painel do dono');
+    box.innerHTML='<div class="bp-box"><div class="bp-top"><h2>⚙️ Painel do dono</h2><button type="button" class="bp-x" aria-label="Fechar">✕</button></div>'+
+      '<p class="bp-sub">Um toque e a planilha é atualizada. O site segue em até 5 segundos.</p><div class="bp-list"></div><div class="bp-msg" aria-live="polite"></div>'+
+      '<button type="button" class="bp-link" data-act="senha">Trocar senha deste aparelho</button></div>';
+    document.body.appendChild(box);
+    msg=box.querySelector('.bp-msg');
+    box.addEventListener('click',function(e){
+      var t=e.target;
+      if(t===box||t.closest('.bp-x')){close();return;}
+      var b=t.closest('.bp-btn');if(b){send(b.getAttribute('data-k'),b.getAttribute('data-s'),b);return;}
+      if(t.closest('[data-act="senha"]')){try{localStorage.removeItem(KEY_STORE);}catch(x){}say('Senha apagada. Será pedida de novo no próximo toque.');}
+    });
+    document.addEventListener('baruki:controle',draw);
+  }
+  function open(){build();draw();box.classList.add('on');document.documentElement.style.overflow='hidden';if(!APPS_SCRIPT_URL)say('Painel em modo leitura: falta colar o endereço do Apps Script.');else say('');}
+  function close(){if(box)box.classList.remove('on');document.documentElement.style.overflow='';if(location.hash==='#painel'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){location.hash='';}}}
+  function check(){if(location.hash==='#painel')open();}
+  window.addEventListener('hashchange',check);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',check);else check();
+})();
+</script>
+<script id="baruki-site-aparencia">
+/* Aba "Site" da planilha (APARÊNCIA DO SITE). Colunas: RECURSO | VALOR | CÓDIGO FINAL | CHAVE | COMO FUNCIONA.
+   Usa o CÓDIGO FINAL (já calculado pelo tema na planilha); se vazio, usa o VALOR.
+   Se a aba não carregar ou estiver incompleta, nada muda: o site segue como está. */
+(function(){
+  'use strict';
+  var SHEET_ID='1_G8UW_PYJ2T2GuolYMnn0_LuMYE1YqBOrBGa_4ZBcyA';
+  var URL_CSV='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent('Site');
+  var CACHE_KEY='baruki_site_cache_v1';
+  var KEYS=['nome_site','cor_fundo','cor_cartao','cor_cabecalho','cor_letra_cabecalho','cor_titulo','cor_produto','cor_descricao','cor_preco','cor_botao','cor_letra_botao','cor_promocao','cor_borda','fonte','tamanho_letra','tamanho_logo','tamanho_produto','tamanho_preco'];
+  var last='',busy=false,styleEl=null,nomeOriginal=null,tituloOriginal=document.title,curModo=null,curFundo=null;
+
+  function plain(s){return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();}
+  function parseCSV(t){
+    var rows=[],row=[],cur='',q=false,i,c;
+    for(i=0;i<t.length;i++){c=t[i];
+      if(q){if(c==='"'){if(t[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+      else if(c==='"')q=true;
+      else if(c===','){row.push(cur);cur='';}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(c!=='\r')cur+=c;
+    }
+    if(cur!==''||row.length){row.push(cur);rows.push(row);}
+    return rows;
+  }
+  function hex(v){v=String(v==null?'':v).trim();return /^#([0-9a-f]{6}|[0-9a-f]{3})$/i.test(v)?v:null;}
+  function pct(v){var m=String(v==null?'':v).replace(',','.').match(/(\d+(?:\.\d+)?)\s*%/);if(!m)return null;var k=parseFloat(m[1])/100;return(k>=0.6&&k<=2)?k:null;}
+  function fonte(v){v=String(v==null?'':v).trim();return/^[A-Za-z0-9 ,'"\-]{2,60}$/.test(v)?v:null;}
+
+  function parse(csv){
+    var rows=parseCSV(csv),c={val:1,fin:2,key:3},i,j,h;
+    for(i=0;i<rows.length;i++){
+      h=rows[i].map(plain);
+      if(h.indexOf('CHAVE')>-1&&h.indexOf('VALOR')>-1){
+        c.key=h.indexOf('CHAVE');c.val=h.indexOf('VALOR');
+        j=h.indexOf('CODIGO FINAL');if(j>-1)c.fin=j;
+        break;
+      }
+    }
+    var out={},n=0;
+    rows.forEach(function(r){
+      var k=String(r[c.key]||'').trim().toLowerCase();
+      if(KEYS.indexOf(k)<0)return;
+      var b=String(r[c.val]==null?'':r[c.val]).trim(),f=String(r[c.fin]==null?'':r[c.fin]).trim(),v=null;
+      if(k==='nome_site'){v=b||f;v=v?v.slice(0,40):null;}
+      else if(k==='fonte'){v=fonte(f)||null;}
+      else if(k.indexOf('cor_')===0){v=hex(f)||hex(b);}
+      else{v=pct(f);}
+      if(v!==null&&v!==''){out[k]=v;n++;}
+    });
+    return n>=4?out:null; /* proteção: aba ausente/incompleta não muda nada */
+  }
+
+  /* Claro/escuro do fundo escolhido na planilha: o site já tem modo dia/noite; o fundo da planilha só vale no modo
+     que combina com ele (assim o texto nunca fica ilegível). */
+  function modoDe(o){
+    if(!o||!o.cor_fundo)return null;
+    var h=o.cor_fundo.replace('#','');if(h.length===3)h=h.replace(/./g,'$&$&');
+    var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
+    return (0.299*r+0.587*g+0.114*b)/255>0.5?'day':'night';
+  }
+  function trocarModo(m){
+    var day=m==='day';
+    document.body.classList.toggle('day-theme',day);
+    document.documentElement.style.colorScheme=day?'light':'dark';
+    var a=document.getElementById('themeDayOption'),n=document.getElementById('themeNightOption');
+    if(a)a.classList.toggle('active',day);if(n)n.classList.toggle('active',!day);
+    try{localStorage.setItem('baruki_theme_v2',day?'day':'night');}catch(e){}
+  }
+  function syncRoot(){
+    var R=document.documentElement;
+    if(!document.body)return;
+    var day=document.body.classList.contains('day-theme');
+    if(curFundo&&curModo&&((curModo==='day')===day))R.style.setProperty('background',curFundo,'important');
+    else R.style.removeProperty('background');
+  }
+  function css(o){
+    var s=[];
+    if(o.cor_fundo){
+      var P=modoDe(o)==='day'?'html body.day-theme:not(.bk-z):not(.bk-y)':'html body:not(.day-theme):not(.bk-z):not(.bk-y)',F=o.cor_fundo;
+      s.push(P+','+P+' .screen,'+P+' .screen>.container,'+P+' #menu,'+P+' #menu .container,'+P+' #products,'+P+' #categories,'+P+' .categories{background:'+F+'!important}');
+      s.push(P+' #menu .container::before,'+P+' #menu .container::after,'+P+' .categories::before,'+P+' .categories::after{background:'+F+'!important}');
+    }
+    if(o.cor_cabecalho)s.push('.header{background:'+o.cor_cabecalho+'!important}');
+    if(o.cor_letra_cabecalho)s.push('.header,.header .brand,.header .brand span{color:'+o.cor_letra_cabecalho+'!important}');
+    if(o.cor_cartao||o.cor_borda){
+      var ca=(o.cor_cartao?'background:'+o.cor_cartao+'!important;':'')+(o.cor_borda?'border-color:'+o.cor_borda+'!important;':'');
+      s.push('.product,.beverage-product,#products .product{'+ca+'}');
+      s.push('#categories .cat{'+ca+'}');
+      if(o.cor_cartao)s.push('#categories .cat .cat-emoji,#categories .cat .category-image{background:transparent!important}');
+    }
+    if(o.cor_titulo)s.push('#categories .cat,#categories .cat *{color:'+o.cor_titulo+'!important}');
+    if(o.cor_produto)s.push('.product h3,#products .product h3{color:'+o.cor_produto+'!important}');
+    if(o.cor_descricao)s.push('.desc,.product .desc,#products .product .desc{color:'+o.cor_descricao+'!important}');
+    if(o.cor_preco)s.push('.product .price,#products .product .price{color:'+o.cor_preco+'!important}');
+    if(o.cor_botao)s.push('.add,.product-qty button{background:'+o.cor_botao+'!important}');
+    if(o.cor_letra_botao)s.push('.add,.product-qty button{color:'+o.cor_letra_botao+'!important}');
+    if(o.cor_promocao)s.push('#barukiPromoBanner{background:'+o.cor_promocao+'!important}#barukiPromoBanner .bpb-badge{color:#fff!important;background:rgba(0,0,0,.35)!important}');
+    if(o.fonte)s.push('html,body,button,input,select,textarea{font-family:'+o.fonte+',Arial,Helvetica,sans-serif!important}');
+    if(o.tamanho_letra)s.push('.desc,.product .desc,.add{zoom:'+o.tamanho_letra+'}');
+    if(o.tamanho_logo)s.push('.header .brand{zoom:'+o.tamanho_logo+'}');
+    if(o.tamanho_produto)s.push('.product h3{zoom:'+o.tamanho_produto+'}');
+    if(o.tamanho_preco)s.push('.product .price{zoom:'+o.tamanho_preco+'}');
+    return s.join('\n');
+  }
+  function nome(n){
+    var b=document.querySelector('.header .brand');
+    if(!b||!n)return;
+    if(nomeOriginal===null)nomeOriginal=b.innerHTML;
+    if(b.getAttribute('data-site-nome')===n)return;
+    var p=n.split(' '),last=p.length>1?p.pop():'';
+    b.textContent='';
+    b.appendChild(document.createTextNode(p.join(' ')+(last?' ':'')));
+    if(last){var sp=document.createElement('span');sp.textContent=last;b.appendChild(sp);}
+    b.setAttribute('data-site-nome',n);
+    document.title=n;
+  }
+  function aplicar(o){
+    try{
+      if(!document.body)return;
+      if(!styleEl){styleEl=document.createElement('style');styleEl.id='baruki-site-estilo';}
+      styleEl.textContent=css(o);
+      document.body.appendChild(styleEl); /* sempre por último, para valer sobre os outros estilos */
+      if(o.nome_site)nome(o.nome_site);
+      curModo=modoDe(o);curFundo=o.cor_fundo||null;
+      if(curModo){ /* quando o tema/fundo muda na planilha, o site abre no modo certo uma vez; depois o cliente pode alternar */
+        var sig=curModo+'|'+curFundo,ant=null;
+        try{ant=localStorage.getItem('baruki_site_modo_v1');}catch(e){}
+        if(ant!==sig){trocarModo(curModo);try{localStorage.setItem('baruki_site_modo_v1',sig);}catch(e){}}
+      }
+      syncRoot();
+      if(!aplicar._obs&&window.MutationObserver){aplicar._obs=new MutationObserver(syncRoot);aplicar._obs.observe(document.body,{attributes:true,attributeFilter:['class']});}
+    }catch(e){console.error('[Site] erro ao aplicar a aparência',e);}
+  }
+
+  try{var saved=localStorage.getItem(CACHE_KEY);if(saved){var so=JSON.parse(saved);if(so&&typeof so==='object'){
+    if(document.body)aplicar(so);else document.addEventListener('DOMContentLoaded',function(){aplicar(so);});
+  }}}catch(e){}
+
+  function load(){
+    if(busy||document.hidden)return;
+    busy=true;
+    fetch(URL_CSV+'&_='+Date.now(),{cache:'no-store'}).then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.text();
+    }).then(function(csv){
+      if(csv===last)return;
+      var o=parse(csv);
+      if(!o){console.warn('[Site] aba "Site" não encontrada ou incompleta — mantendo a aparência atual.');return;}
+      last=csv;
+      try{localStorage.setItem(CACHE_KEY,JSON.stringify(o));}catch(e){}
+      aplicar(o);
+    }).catch(function(e){console.warn('[Site] não foi possível carregar — mantendo a aparência atual.',e);})
+      .then(function(){busy=false;});
+  }
+  load();
+  setInterval(load,5000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)load();});
+  window.addEventListener('load',load);
+})();
+</script>
 </body>
 </html>
