@@ -5109,8 +5109,8 @@ function showProduct(id){
   }
 
   let sizeControls='';
-  if(p.sizePrices) sizeControls='<div class="section"><h3>Tamanho</h3><label class="option"><input type="radio" name="pizzaSize" value="P" onchange="updatePizzaTotal()"> Pizza P — '+money(p.price)+'</label><label class="option"><input type="radio" name="pizzaSize" value="G" onchange="updatePizzaTotal()"> Pizza G — '+money(p.priceG)+'</label></div>';
-  if(p.cat==='pizzas') sizeControls+='<div class="section pizza-border-box"><h3>🍕 Borda (opcional)</h3><label class="option"><input type="radio" name="pizzaBorda" value="0" onchange="toggleBordaRecheio();updatePizzaTotal()"> Sem borda — R$ 0,00</label><label class="option"><input type="radio" name="pizzaBorda" value="10" onchange="toggleBordaRecheio();updatePizzaTotal()"> Borda recheada — '+money(10)+'</label><div id="bordaRecheio" style="display:none;margin-top:8px"><div class="muted smallhelp">Escolha o recheio da borda:</div><label class="option"><input type="radio" name="bordaRecheio" value="CHEDDAR" onchange="updatePizzaTotal()"> CHEDDAR</label><label class="option"><input type="radio" name="bordaRecheio" value="CHOCOLATE" onchange="updatePizzaTotal()"> CHOCOLATE</label><label class="option"><input class="option" type="radio" name="bordaRecheio" value="CATUPIRY" onchange="updatePizzaTotal()"> CATUPIRY</label></div></div>';
+  if(p.sizePrices) sizeControls='<div class="section pizza-size-box"><h3>Tamanho</h3><label class="option pizza2-radio"><input type="radio" name="pizzaSize" value="P" onchange="updatePizzaTotal()"> Pizza P — '+money(p.price)+'</label><label class="option pizza2-radio"><input type="radio" name="pizzaSize" value="G" onchange="updatePizzaTotal()"> Pizza G — '+money(p.priceG)+'</label></div>';
+  if(p.cat==='pizzas') sizeControls+='<div class="section pizza-border-box"><div class="pizza2-section-title"><h3>🍕 Escolha a borda</h3><span>OPCIONAL</span></div><label class="option pizza2-radio"><input type="radio" name="pizzaBorda" value="0" onchange="toggleBordaRecheio();updatePizzaTotal()"> Sem borda <strong style="margin-left:auto">R$ 0,00</strong></label><label class="option pizza2-radio"><input type="radio" name="pizzaBorda" value="10" onchange="toggleBordaRecheio();updatePizzaTotal()"> Borda recheada <strong style="margin-left:auto">+ '+money(10)+'</strong></label><div id="bordaRecheio" style="display:none;margin-top:8px"><div class="muted smallhelp">Escolha o recheio da borda:</div><label class="option pizza2-radio"><input type="radio" name="bordaRecheio" value="CHEDDAR" onchange="updatePizzaTotal()"> CHEDDAR</label><label class="option pizza2-radio"><input type="radio" name="bordaRecheio" value="CHOCOLATE" onchange="updatePizzaTotal()"> CHOCOLATE</label><label class="option pizza2-radio"><input class="option" type="radio" name="bordaRecheio" value="CATUPIRY" onchange="updatePizzaTotal()"> CATUPIRY</label></div></div>';
 
   document.getElementById('detailContent').innerHTML=
     '<div class="panel detail">'+
@@ -5166,10 +5166,17 @@ function updatePizzaTotal(){
   const base=getPizzaBasePrice();
   const borda=getPizzaBorda();
   const qty=Math.max(1,Number(document.getElementById('detailQty')?.textContent)||1);
+  let adicionais=0;
+  document.querySelectorAll('.addIngredient:checked').forEach(el=>{adicionais+=Number(el.dataset.price)||0;});
   box.innerHTML='<div class="row"><span>Pizza ('+qty+'x)</span><strong>'+money(base*qty)+'</strong></div>'+
     (borda>0?'<div class="row"><span>Borda ('+qty+'x)</span><strong>'+money(borda*qty)+'</strong></div>':'')+
-    '<div class="total row"><span>TOTAL</span><strong>'+money((base+borda)*qty)+'</strong></div>';
+    (adicionais>0?'<div class="row"><span>Adicionais ('+qty+'x)</span><strong>'+money(adicionais*qty)+'</strong></div>':'')+
+    '<div class="total row"><span>TOTAL</span><strong>'+money((base+borda+adicionais)*qty)+'</strong></div>';
 }
+/* Atualiza o total da pizza ao marcar/desmarcar ingredientes adicionais */
+document.addEventListener('change',function(e){
+  if(e.target&&e.target.classList&&e.target.classList.contains('addIngredient')&&typeof updatePizzaTotal==='function')updatePizzaTotal();
+});
 
 function addCurrent(){
   const p=currentProduct;
@@ -11465,6 +11472,86 @@ body.day-theme #products .product .desc{color:#333!important}
 <style id="config-painel-menor">
 /* Configurações: painel menor, adaptado à tela do iPhone (o topo com o X fica sempre visível) */
 .settings-panel{max-height:80vh!important;max-height:80dvh!important;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-sizing:border-box}
+</style>
+<style id="pizza2-visibilidade-maior">
+/* Montagem da Pizza G (2 sabores): letras, campos e botões maiores para melhor visibilidade */
+html body .pizza2-page .pizza2-half-preview{min-height:112px!important;padding:14px!important}
+html body .pizza2-page .pizza2-half-tag{font-size:12px!important;margin-bottom:9px!important}
+html body .pizza2-page .pizza2-half-name{font-size:clamp(17px,4.7vw,21px)!important;line-height:1.25!important}
+html body .pizza2-page .pizza2-half-cat{font-size:13px!important;margin-top:6px!important}
+html body .pizza2-page .pizza2-half-icon{font-size:34px!important}
+
+html body .pizza2-page .pizza2-choice-head{gap:13px!important}
+html body .pizza2-page .pizza2-choice-head h3{font-size:21px!important;line-height:1.2!important}
+html body .pizza2-page .pizza2-choice-head small{font-size:14px!important;line-height:1.35!important}
+html body .pizza2-page .pizza2-number{width:50px!important;height:50px!important;min-width:50px!important;font-size:24px!important}
+html body .pizza2-page .pizza2-done{font-size:13px!important;padding:6px 10px!important}
+
+html body .pizza2-page .pizza2-field-label{font-size:15px!important;letter-spacing:.4px!important;margin-bottom:8px!important}
+html body .pizza2-page select.pizza2-select,
+html body .pizza2-page .pizza2-select{font-size:18px!important;min-height:58px!important;padding:0 46px 0 16px!important;text-overflow:ellipsis!important}
+html body .pizza2-page .pizza2-select-wrap:after{font-size:22px!important;right:15px!important;width:34px!important;height:34px!important}
+html body .pizza2-page .pizza2-selected{font-size:16px!important;line-height:1.3!important;min-height:54px!important;padding:11px 13px!important;gap:11px!important}
+html body .pizza2-page .pizza2-selected .check{width:30px!important;height:30px!important;font-size:15px!important}
+html body .pizza2-page .pizza2-plus{height:48px!important}
+html body .pizza2-page .pizza2-plus span{width:48px!important;height:48px!important;font-size:30px!important}
+
+html body .pizza2-page .pizza2-lock{font-size:14px!important;line-height:1.4!important;padding:13px 14px!important;gap:10px!important}
+html body .pizza2-page .pizza2-tip{font-size:16px!important;line-height:1.45!important;padding:15px!important;gap:11px!important}
+html body .pizza2-page .pizza2-tip>span:first-child{font-size:22px!important}
+
+html body .pizza2-page .pizza2-section-title h3{font-size:23px!important}
+html body .pizza2-page .pizza2-section-title span{font-size:14px!important}
+html body .pizza2-page .pizza2-border label.pizza2-radio,
+html body .pizza2-page .pizza2-radio{font-size:18px!important;line-height:1.3!important;min-height:60px!important;padding:13px 14px!important;gap:12px!important}
+html body .pizza2-page .pizza2-radio input{width:26px!important;height:26px!important}
+html body .pizza2-page .pizza2-radio strong{font-size:18px!important}
+
+html body .pizza2-page #twoFlavorTotal .row,
+html body .pizza2-page .pizza2-total .row{font-size:16px!important}
+html body .pizza2-page #twoFlavorTotal .row strong,
+html body .pizza2-page .pizza2-total .row strong{font-size:17px!important}
+html body .pizza2-page #twoFlavorTotal .total,
+html body .pizza2-page .pizza2-total .total{font-size:22px!important}
+html body .pizza2-page #twoFlavorTotal .total strong,
+html body .pizza2-page .pizza2-total .total strong,
+html body .pizza2-page #twoFlavorTotal>.total>strong{font-size:30px!important}
+
+html body .pizza2-page .pizza2-note h3,
+html body .pizza2-page .section.pizza2-note h3{font-size:21px!important}
+html body .pizza2-page .pizza2-note textarea,
+html body .pizza2-page textarea#pizza2Note{font-size:17px!important;min-height:112px!important;padding:14px!important}
+html body .pizza2-page .pizza2-add,
+html body .pizza2-page button.pizza2-add{font-size:21px!important;min-height:66px!important;padding:16px 12px!important}
+</style>
+<style id="pizza-borda-destaque-laranja">
+/* Borda das pizzas normais: mesmo visual da montagem de 2 sabores (opção escolhida em laranja) */
+body:not(.day-theme) #detailContent .pizza-border-box{background:linear-gradient(155deg,#222,#151515)!important;border:1px solid rgba(255,255,255,.09)!important;border-radius:22px!important;padding:15px!important}
+#detailContent .pizza-border-box .pizza2-section-title{display:flex!important;align-items:center!important;justify-content:space-between!important;margin-bottom:10px!important}
+#detailContent .pizza-border-box .pizza2-section-title h3{margin:0!important;font-size:21px!important}
+#detailContent .pizza-border-box .pizza2-section-title span{font-size:14px!important;font-weight:800!important;letter-spacing:.8px!important;color:#f0b27a!important}
+body:not(.day-theme) #detailContent .pizza-border-box label.pizza2-radio{display:flex!important;align-items:center!important;gap:12px!important;min-height:60px!important;padding:13px 14px!important;margin:8px 0!important;border-radius:15px!important;background:#121212!important;border:1px solid #303030!important;color:#f7f7f7!important;font-size:18px!important;font-weight:800!important;transition:.2s}
+body:not(.day-theme) #detailContent .pizza-border-box label.pizza2-radio strong{color:#ffb74d!important;font-size:18px!important}
+body:not(.day-theme) #detailContent .pizza-border-box label.pizza2-radio:has(input:checked){border-color:#ffb74d!important;background:linear-gradient(135deg,rgba(255,107,0,.22),rgba(255,107,0,.05))!important;box-shadow:0 6px 18px rgba(255,107,0,.15)!important}
+#detailContent .pizza-border-box label.pizza2-radio input[type="radio"]{width:26px!important;height:26px!important;flex:none!important;accent-color:#ff9800!important}
+</style>
+<style id="pizza-tamanho-destaque-laranja">
+/* Tamanho P/G: opção escolhida marcada em laranja, igual à borda */
+body:not(.day-theme) #detailContent .pizza-size-box label.pizza2-radio{display:flex!important;align-items:center!important;gap:12px!important;min-height:60px!important;padding:13px 14px!important;margin:8px 0!important;border-radius:15px!important;background:#121212!important;border:1px solid #303030!important;color:#f7f7f7!important;font-size:18px!important;font-weight:800!important;transition:.2s}
+body:not(.day-theme) #detailContent .pizza-size-box label.pizza2-radio:has(input:checked){border-color:#ffb74d!important;background:linear-gradient(135deg,rgba(255,107,0,.22),rgba(255,107,0,.05))!important;box-shadow:0 6px 18px rgba(255,107,0,.15)!important}
+#detailContent .pizza-size-box label.pizza2-radio input[type="radio"]{width:26px!important;height:26px!important;flex:none!important;accent-color:#ff9800!important}
+</style>
+<style id="banner-some-no-produto">
+/* Ao abrir um produto: somem topo, banners e Palavra do dia; a tela abre direto em "Voltar" (voltam no cardápio) */
+body:has(#detail.active) header.header,
+body:has(#detail.active) .baruki-banner-wrap,
+body:has(#detail.active) #onlineDiscreto,
+body:has(#detail.active) #mensagemBiblicaDiaria{display:none!important}
+</style>
+<style id="sem-rolagem-desnecessaria">
+/* Páginas curtas não rolam; a rolagem só aparece quando o conteúdo realmente precisa (usa a altura visível real do celular) */
+html,body{min-height:0!important}
+body{min-height:100dvh!important}
 </style>
 </body>
 </html>
