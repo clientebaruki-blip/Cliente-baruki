@@ -2163,7 +2163,7 @@ html.ctl-mbiblica-off #mensagemBiblicaDiaria{display:none!important}
    Se a aba não carregar, nada muda: o site segue como está (usa o último estado salvo no aparelho). */
 (function(){
   'use strict';
-  var SHEET_ID='1OXSa_BOEBj7Fx40k9Orh9R-xb0yHp7rFgJP-UpOq7Ew';
+  var SHEET_ID='11YeCE_kpGA4wdvkjKAR7pXR4OnaqoMhwmaAgk-YmX9k';
   var SHEET_TAB='Controle';
   var URL_CSV='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(SHEET_TAB);
   var CACHE_KEY='baruki_controle_cache_v9';
@@ -5227,7 +5227,7 @@ function addCurrent(){
 
 function showPizzaTwoFlavors(){
  const groups={Pizzas:products.filter(p=>p.cat==='pizzas'&&p.group==='Pizzas'&&p.sizePrices),Especiais:products.filter(p=>p.cat==='pizzas'&&p.group==='Especiais'&&p.sizePrices),'Pizza Doce':products.filter(p=>p.cat==='pizzas'&&p.group==='Pizza Doce'&&p.sizePrices)};
- const cats='<option value="">Escolha uma categoria</option>'+['Pizzas','Especiais','Pizza Doce'].map(g=>'<option value="'+safeText(g)+'">'+pizzaIconForGroup(g)+' '+safeText(g)+'</option>').join('');
+ const cats='<option value="">Escolha uma categoria</option>'+['Pizzas','Especiais','Pizza Doce'].map(g=>'<option value="'+safeText(g)+'">'+pizzaIconForGroup(g)+' '+safeText(g).toUpperCase()+'</option>').join('');
  currentProduct={id:'pizza2sabores',cat:'pizzas',name:'🍕 PIZZA G — 2 SABORES',price:0,special:'twoFlavors'};
  const detail=document.getElementById('detailContent');if(!detail)return;
  detail.innerHTML='<div class="panel detail pizza2-page"><div class="pizza2-top"><div class="pizza2-kicker">🍕 PIZZA G • PERSONALIZE DO SEU JEITO</div><div class="pizza2-title-row"><div class="pizza2-icon">🍕</div><div><h2>Monte sua Pizza G</h2><p>Escolha <b>1 sabor para cada metade</b> e crie sua combinação.</p></div></div><div class="pizza2-progress"><span id="pizza2Step1" class="step active"></span><span id="pizza2Step2" class="step"></span></div><div id="pizza2ProgressText" class="pizza2-progress-text">Comece escolhendo o primeiro sabor</div><div class="pizza2-live-preview"><div id="pizza2Preview1" class="pizza2-half-preview"><span class="pizza2-half-tag">◐ METADE 1</span><div class="pizza2-half-name">Escolha um sabor</div><div class="pizza2-half-cat">Aguardando seleção</div><span class="pizza2-half-icon">🍕</span></div><div id="pizza2Preview2" class="pizza2-half-preview"><span class="pizza2-half-tag">◑ METADE 2</span><div class="pizza2-half-name">Escolha um sabor</div><div class="pizza2-half-cat">Aguardando seleção</div><span class="pizza2-half-icon">🍕</span></div></div></div>'+ 
@@ -6748,13 +6748,18 @@ function fecharConfiguracoesBaruki(){
   function allUrls(){
     const ex=Array.isArray(window.BarukiBannerExtras)?window.BarukiBannerExtras:[];
     const out=[];
-    /* Banners 1 a 8: se houver link de imagem na planilha, ele substitui a imagem fixa; se vazio, usa a fixa. */
-    for(let i=0;i<8;i++)out.push(fixUrl(ex[i])||urls[i]);
-    /* Banners 9 a 16: só aparecem se houver link na planilha. */
+    /* Banners embutidos 1 a 8 são preservados sempre; a planilha não os substitui. */
+    for(let i=0;i<8;i++)out.push(urls[i]);
+    /* Banners 9 a 16 continuam sendo controlados pela planilha, como antes. */
     for(let i=8;i<16;i++)out.push(fixUrl(ex[i]));
-    /* Vídeo na planilha: toma o lugar da imagem daquele banner (link apagado = volta a imagem). */
+    /* Links da planilha dos banners 1 a 8 entram como banners adicionais. */
+    for(let i=0;i<8;i++){
+      const extra=fixUrl(ex[i]);
+      if(extra && out.indexOf(extra)===-1)out.push(extra);
+    }
+    /* Vídeo cadastrado ocupa somente a posição correspondente, sem afetar os extras. */
     for(let i=0;i<16;i++){const v=videoAt(i);if(v)out[i]=v;}
-    return out;
+    return out.filter(function(u,i){return !!u && out.indexOf(u)===i;});
   }
   window.BarukiRemoteStoreStatus=null;
   let vidShown=-1, banners=[], index=0, rotateTimer=null, pollTimer=null, startX=0, busy=false, primeiraCargaFeita=false, pendente=false;
@@ -9312,7 +9317,7 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
    ========================================================= */
 (function(){
   'use strict';
-  var SHEET_ID='1OXSa_BOEBj7Fx40k9Orh9R-xb0yHp7rFgJP-UpOq7Ew';
+  var SHEET_ID='11YeCE_kpGA4wdvkjKAR7pXR4OnaqoMhwmaAgk-YmX9k';
   var URL_CSV='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent('Categorias');
   var KEY='baruki_catimgs_v1';
   var store={categorias:{},cardapio:{},remoto:{}},lastSig=null,lastCsv='',busy=false;
@@ -9484,7 +9489,7 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
    Se a planilha não carregar, o cardápio atual continua funcionando.
    ========================================================= */
 (function(){
-  var SHEET_ID='1OXSa_BOEBj7Fx40k9Orh9R-xb0yHp7rFgJP-UpOq7Ew';
+  var SHEET_ID='11YeCE_kpGA4wdvkjKAR7pXR4OnaqoMhwmaAgk-YmX9k';
   var SHEET_TAB='Cardápio';
   var SHEET_URL='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(SHEET_TAB);
   var CACHE_KEY='baruki_planilha_cache_v12';
@@ -10172,7 +10177,7 @@ body:not(.day-theme) #detailContent #twoFlavorTotal>.total>strong{
    Se a aba não carregar, nada muda. */
 (function(){
   'use strict';
-  var SHEET_ID='1OXSa_BOEBj7Fx40k9Orh9R-xb0yHp7rFgJP-UpOq7Ew';
+  var SHEET_ID='11YeCE_kpGA4wdvkjKAR7pXR4OnaqoMhwmaAgk-YmX9k';
   var URL_CSV='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent('Pedido');
   var MAP={comer_no_local:'optComerNoLocal',retirada_balcao:'optRetiradaBalcao',entrega_floriano:'optFloriano',
            entrega_nova_floresta:'optNovaFloresta',pix:'optPix',cartao:'optCartao',dinheiro:'optDinheiro'};
@@ -10266,7 +10271,7 @@ body:not(.day-theme) #detailContent #twoFlavorTotal>.total>strong{
    Se a aba não carregar ou o valor for inválido, nada muda. */
 (function(){
   'use strict';
-  var SHEET_ID='1OXSa_BOEBj7Fx40k9Orh9R-xb0yHp7rFgJP-UpOq7Ew';
+  var SHEET_ID='11YeCE_kpGA4wdvkjKAR7pXR4OnaqoMhwmaAgk-YmX9k';
   var URL_CSV='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent('Contatos');
   var last='',busy=false;
   function plain(s){return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();}
@@ -10332,7 +10337,7 @@ body:not(.day-theme) #detailContent #twoFlavorTotal>.total>strong{
    ========================================================= */
 (function(){
   'use strict';
-  var SHEET_ID='1OXSa_BOEBj7Fx40k9Orh9R-xb0yHp7rFgJP-UpOq7Ew';
+  var SHEET_ID='11YeCE_kpGA4wdvkjKAR7pXR4OnaqoMhwmaAgk-YmX9k';
   var root=document.documentElement;
   var S={aj:{},rem:{},bl:[],rodLink:'',cats:{},imgs:null};
   var last={};
@@ -10943,7 +10948,7 @@ body:not(.day-theme) #detailContent #twoFlavorTotal>.total>strong{
    - Se a aba não carregar ou o vídeo falhar, nada mais no site é afetado. */
 (function(){
   'use strict';
-  var SHEET_ID='1OXSa_BOEBj7Fx40k9Orh9R-xb0yHp7rFgJP-UpOq7Ew';
+  var SHEET_ID='11YeCE_kpGA4wdvkjKAR7pXR4OnaqoMhwmaAgk-YmX9k';
   var URL_CSV='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent('Vídeo');
   var KEY='video_mp4',SS_KEY='baruki_video_fechado';
   var last=null,busy=false,box=null,vid=null,msg=null,shownUrl='',dismissed='';
@@ -11184,7 +11189,7 @@ html.bkfx-ban-go #barukiBanner::after{animation:bkfxSheen calc(1.6s*var(--bkfx-b
 (function(){
 'use strict';
 if(window.__bkfxLoaded)return;window.__bkfxLoaded=true;
-var SID='1OXSa_BOEBj7Fx40k9Orh9R-xb0yHp7rFgJP-UpOq7Ew',TAB='Animações',LS='bkfx_cfg_v1',LS_THX='bkfx_thx';
+var SID='11YeCE_kpGA4wdvkjKAR7pXR4OnaqoMhwmaAgk-YmX9k',TAB='Animações',LS='bkfx_cfg_v1',LS_THX='bkfx_thx';
 var D=document,R=D.documentElement;
 var RM=false;try{RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);}catch(e){}
 var KEYS=['botoes','pizza','carrinho','mascote','produto','resumo','transicao','festa','banner'];
@@ -11552,6 +11557,64 @@ body:has(#detail.active) #mensagemBiblicaDiaria{display:none!important}
 /* Páginas curtas não rolam; a rolagem só aparece quando o conteúdo realmente precisa (usa a altura visível real do celular) */
 html,body{min-height:0!important}
 body{min-height:100dvh!important}
+</style>
+<style id="separador-metades">
+/* Borda grossa colorida separando o bloco da Primeira metade e da Segunda metade */
+html body:not(.day-theme) .pizza2-page .pizza2-choice,
+html body:not(.day-theme) .pizza2-page .pizza2-choice.selected,
+html body.day-theme .pizza2-page .pizza2-choice{border:4px solid #ff9800!important}
+</style>
+<style id="setas-cores-metades">
+/* Setas dos seletores: Primeira metade = verde | Segunda metade = azul */
+html body #pizza2Choice1 .pizza2-select-wrap:after{
+  background:linear-gradient(145deg,#3ddc84,#00a85a)!important;color:#ffffff!important;
+  box-shadow:0 3px 10px rgba(0,200,100,.45)!important;
+}
+html body #pizza2Choice2 .pizza2-select-wrap:after{
+  background:linear-gradient(145deg,#5ab8ff,#1e6fe0)!important;color:#ffffff!important;
+  box-shadow:0 3px 10px rgba(30,120,230,.45)!important;
+}
+</style>
+<style id="categoria-fonte-mais-1px">
+/* Categorias (Primeira e Segunda metade): letra 2px maior (18px -> 20px) */
+html body .pizza2-page select#pizzaCat1.pizza2-select,
+html body .pizza2-page select#pizzaCat2.pizza2-select,
+html body .pizza2-page select#pizzaCat1 option,
+html body .pizza2-page select#pizzaCat2 option{font-size:clamp(18px,5.56vw,22px)!important}
+</style>
+<style id="textos-pequenos-12px">
+/* Tela de 2 sabores: único texto ainda abaixo de 12px (kicker "PIZZA G • PERSONALIZE...") sobe de 10px para 12px */
+html body .pizza2-page .pizza2-kicker{font-size:12px!important;letter-spacing:1px!important}
+</style>
+<style id="fontes-responsivas-celular">
+/* Tela de 2 sabores: letras se adaptam à largura do celular.
+   Em celular de 360px ficam EXATAMENTE como estão hoje; em telas menores diminuem um pouco
+   e em telas maiores aumentam um pouco (nunca abaixo de 12px). */
+html body .pizza2-page .pizza2-kicker{font-size:clamp(12px,3.33vw,13px)!important}
+html body .pizza2-page .pizza2-title-row p{font-size:clamp(12px,3.33vw,13px)!important}
+html body .pizza2-page .pizza2-progress-text{font-size:clamp(12px,3.33vw,13px)!important}
+html body .pizza2-page .pizza2-half-tag{font-size:clamp(12px,3.33vw,13px)!important}
+html body .pizza2-page .pizza2-half-cat{font-size:clamp(12px,3.61vw,15px)!important}
+html body .pizza2-page .pizza2-choice-head h3{font-size:clamp(18px,5.83vw,24px)!important}
+html body .pizza2-page .pizza2-choice-head small{font-size:clamp(12px,3.89vw,16px)!important}
+html body .pizza2-page .pizza2-number{font-size:clamp(21px,6.67vw,27px)!important}
+html body .pizza2-page .pizza2-done{font-size:clamp(12px,3.61vw,15px)!important}
+html body .pizza2-page .pizza2-field-label{font-size:clamp(13px,4.17vw,17px)!important}
+html body .pizza2-page select.pizza2-select, html body .pizza2-page .pizza2-select{font-size:clamp(16px,5.0vw,20px)!important}
+html body .pizza2-page .pizza2-selected{font-size:clamp(14px,4.44vw,18px)!important}
+html body .pizza2-page .pizza2-lock{font-size:clamp(12px,3.89vw,16px)!important}
+html body .pizza2-page .pizza2-tip{font-size:clamp(14px,4.44vw,18px)!important}
+html body .pizza2-page .pizza2-section-title h3{font-size:clamp(20px,6.39vw,26px)!important}
+html body .pizza2-page .pizza2-section-title span{font-size:clamp(12px,3.89vw,16px)!important}
+html body .pizza2-page .pizza2-radio, html body .pizza2-page .pizza2-border label.pizza2-radio{font-size:clamp(16px,5.0vw,20px)!important}
+html body .pizza2-page .pizza2-radio strong{font-size:clamp(16px,5.0vw,20px)!important}
+html body .pizza2-page .pizza2-total .row, html body .pizza2-page #twoFlavorTotal .row{font-size:clamp(14px,4.44vw,18px)!important}
+html body .pizza2-page .pizza2-total .row strong, html body .pizza2-page #twoFlavorTotal .row strong{font-size:clamp(15px,4.72vw,19px)!important}
+html body .pizza2-page .pizza2-total .total, html body .pizza2-page #twoFlavorTotal .total{font-size:clamp(19px,6.11vw,25px)!important}
+html body .pizza2-page .pizza2-total .total strong, html body .pizza2-page #twoFlavorTotal>.total>strong{font-size:clamp(26px,8.33vw,34px)!important}
+html body .pizza2-page .section.pizza2-note h3, html body .pizza2-page .pizza2-note h3{font-size:clamp(18px,5.83vw,24px)!important}
+html body .pizza2-page textarea#pizza2Note, html body .pizza2-page .pizza2-note textarea{font-size:clamp(15px,4.72vw,19px)!important}
+html body .pizza2-page button.pizza2-add, html body .pizza2-page .pizza2-add{font-size:clamp(18px,5.83vw,24px)!important}
 </style>
 </body>
 </html>
