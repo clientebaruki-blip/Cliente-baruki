@@ -2733,6 +2733,33 @@ background:#fff!important;border:1px solid #ead6a3;box-shadow:none;color:#2b2b2b
   </div>
 
   <div class="formgroup baruki-order-note"><label for="orderNote">Observações do pedido (opcional)</label><textarea id="orderNote" rows="3" maxlength="500" placeholder="Ex.: ponto da carne, instruções para entrega... "></textarea></div>
+  <div id="barukiAval" class="baruki-aval" role="group" aria-labelledby="barukiAvalTitulo">
+    <div class="baruki-aval-head">
+      <span class="baruki-aval-star" aria-hidden="true">⭐</span>
+      <div class="baruki-aval-ttl">
+        <strong id="barukiAvalTitulo">Avalie nosso cardápio</strong>
+        <small>De 1 a 10, o que você achou? Sua opinião nos ajuda a melhorar.</small>
+      </div>
+      <span class="baruki-aval-tag">OPCIONAL</span>
+    </div>
+    <div class="baruki-aval-grid" role="radiogroup" aria-label="Nota de 1 a 10">
+      <button type="button" class="baruki-aval-n" data-n="1" role="radio" aria-checked="false">1</button>
+      <button type="button" class="baruki-aval-n" data-n="2" role="radio" aria-checked="false">2</button>
+      <button type="button" class="baruki-aval-n" data-n="3" role="radio" aria-checked="false">3</button>
+      <button type="button" class="baruki-aval-n" data-n="4" role="radio" aria-checked="false">4</button>
+      <button type="button" class="baruki-aval-n" data-n="5" role="radio" aria-checked="false">5</button>
+      <button type="button" class="baruki-aval-n" data-n="6" role="radio" aria-checked="false">6</button>
+      <button type="button" class="baruki-aval-n" data-n="7" role="radio" aria-checked="false">7</button>
+      <button type="button" class="baruki-aval-n" data-n="8" role="radio" aria-checked="false">8</button>
+      <button type="button" class="baruki-aval-n" data-n="9" role="radio" aria-checked="false">9</button>
+      <button type="button" class="baruki-aval-n" data-n="10" role="radio" aria-checked="false">10</button>
+    </div>
+    <div class="baruki-aval-scale" aria-hidden="true"><span>Ruim</span><span>Excelente</span></div>
+    <div class="baruki-aval-foot">
+      <span id="barukiAvalMsg" class="baruki-aval-msg" aria-live="polite">Toque em uma nota, se quiser avaliar.</span>
+      <button type="button" id="barukiAvalLimpar" class="baruki-aval-clear" hidden>Limpar</button>
+    </div>
+  </div>
   <div id="checkoutSummary" class="summary"></div>
   <button class="btn green baruki-send-order" style="margin-top:14px" onclick="sendWhatsApp()">📲 ENVIAR PEDIDO PARA O WHATSAPP</button>
 </div>
@@ -5698,6 +5725,7 @@ function sendWhatsApp(){
     message+='\n• Troco do cliente: '+money(received-total);
   }
 
+  try{const _av=window.BarukiAvaliacao&&window.BarukiAvaliacao.nota();if(_av){message+='\n\n⭐ *Avaliação do cardápio:* '+_av+'/10';window.BarukiAvaliacao.limpar();}}catch(e){}
   // Inicia o cronômetro de 45 minutos no momento em que o pedido é enviado.
   if(window.__barukiMsgAbertura)message=window.__barukiMsgAbertura+'\n\n'+message;
   if(window.__barukiMsgFinal)message+='\n\n'+window.__barukiMsgFinal;
@@ -12180,5 +12208,99 @@ html body #bordaRecheio2 label.option.pizza2-radio input[type="radio"]{
   position:static!important;top:auto!important;transform:none!important;flex:none!important;
 }
 </style>
+
+<style id="baruki-avaliacao-cardapio">
+/* Avaliação opcional do cardápio (tela Finalizar pedido). Só afeta .baruki-aval. */
+.baruki-aval{margin:16px 0 4px;padding:14px 14px 12px;border-radius:18px;border:1px solid rgba(212,175,55,.35);
+  background:linear-gradient(160deg,#1f1b12 0%,#181818 60%);box-shadow:0 8px 22px rgba(0,0,0,.28);color:#f5f5f5;box-sizing:border-box}
+.baruki-aval-head{display:flex;align-items:center;gap:10px}
+.baruki-aval-star{font-size:28px;line-height:1;filter:drop-shadow(0 0 8px rgba(255,193,7,.55))}
+.baruki-aval-ttl{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.baruki-aval-ttl strong{font-size:15px;font-weight:900;letter-spacing:.2px;color:#ffe082}
+.baruki-aval-ttl small{font-size:12px;line-height:1.35;color:#bdbdbd}
+.baruki-aval-tag{align-self:flex-start;font-size:10px;font-weight:900;letter-spacing:.8px;padding:4px 8px;border-radius:999px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#d0d0d0;white-space:nowrap}
+.baruki-aval-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+@media(min-width:520px){.baruki-aval-grid{grid-template-columns:repeat(10,1fr)}}
+.baruki-aval-n{--c:#ff9800;appearance:none;-webkit-appearance:none;cursor:pointer;min-height:44px;border-radius:12px;
+  border:2px solid var(--c);background:transparent;color:var(--c);font:inherit;font-size:17px;font-weight:900;padding:0;
+  transition:transform .15s ease,background .15s ease,color .15s ease,box-shadow .15s ease;-webkit-tap-highlight-color:transparent}
+.baruki-aval-n[data-n="1"],.baruki-aval-n[data-n="2"]{--c:#ff4d3d}
+.baruki-aval-n[data-n="3"],.baruki-aval-n[data-n="4"]{--c:#ff8a1f}
+.baruki-aval-n[data-n="5"],.baruki-aval-n[data-n="6"]{--c:#f5c211}
+.baruki-aval-n[data-n="7"],.baruki-aval-n[data-n="8"]{--c:#9ccc3a}
+.baruki-aval-n[data-n="9"],.baruki-aval-n[data-n="10"]{--c:#19c764}
+.baruki-aval-n:active{transform:scale(.93)}
+.baruki-aval-n.is-on{background:var(--c);color:#111;transform:translateY(-2px) scale(1.06);box-shadow:0 6px 16px color-mix(in srgb,var(--c) 55%,transparent)}
+.baruki-aval-n:focus-visible,.baruki-aval-clear:focus-visible{outline:3px solid #ffe082;outline-offset:2px}
+.baruki-aval-scale{display:flex;justify-content:space-between;margin-top:8px;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8d8d8d}
+.baruki-aval-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;min-height:30px}
+.baruki-aval-msg{font-size:13px;font-weight:800;color:#cfcfcf}
+.baruki-aval-msg.is-on{color:#ffe082;animation:barukiAvalPop .25s ease}
+.baruki-aval-clear{appearance:none;-webkit-appearance:none;border:1px solid rgba(255,255,255,.22);background:transparent;color:#d0d0d0;
+  font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;cursor:pointer}
+.baruki-aval-clear[hidden]{display:none}
+@keyframes barukiAvalPop{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.baruki-aval-n,.baruki-aval-msg.is-on{transition:none;animation:none}}
+
+/* Tema Dia */
+body.day-theme .baruki-aval{background:linear-gradient(160deg,#fff8e6 0%,#fff 65%);border-color:#f0c869;box-shadow:0 6px 18px rgba(0,0,0,.08);color:#222}
+body.day-theme .baruki-aval-ttl strong{color:#a86a00}
+body.day-theme .baruki-aval-ttl small{color:#666}
+body.day-theme .baruki-aval-tag{background:#f3f3f3;border-color:#ddd;color:#666}
+body.day-theme .baruki-aval-n[data-n="5"],body.day-theme .baruki-aval-n[data-n="6"]{--c:#d99b00}
+body.day-theme .baruki-aval-n[data-n="7"],body.day-theme .baruki-aval-n[data-n="8"]{--c:#6fa31c}
+body.day-theme .baruki-aval-n[data-n="9"],body.day-theme .baruki-aval-n[data-n="10"]{--c:#0fa54f}
+body.day-theme .baruki-aval-n.is-on{color:#fff}
+body.day-theme .baruki-aval-scale{color:#888}
+body.day-theme .baruki-aval-msg{color:#555}
+body.day-theme .baruki-aval-msg.is-on{color:#a86a00}
+body.day-theme .baruki-aval-clear{border-color:#ccc;color:#555}
+</style>
+<script id="baruki-avaliacao-cardapio-js">
+/* Avaliação opcional: só guarda a nota na memória da página; vai na mensagem do WhatsApp apenas se escolhida. */
+(function(){
+  var ATIVA=true; // false = esconde o bloco e nada é enviado
+  var box=document.getElementById('barukiAval');
+  if(!box)return;
+  if(!ATIVA){box.style.display='none';return;}
+  var btns=[].slice.call(box.querySelectorAll('.baruki-aval-n'));
+  var msg=document.getElementById('barukiAvalMsg');
+  var clr=document.getElementById('barukiAvalLimpar');
+  var padrao='Toque em uma nota, se quiser avaliar.';
+  var atual=0;
+  function texto(n){
+    if(n<=2)return '😞 '+n+' — Precisa melhorar muito';
+    if(n<=4)return '😕 '+n+' — Pode melhorar';
+    if(n<=6)return '🙂 '+n+' — Razoável';
+    if(n<=8)return '😊 '+n+' — Gostei!';
+    if(n===9)return '😍 9 — Muito bom!';
+    return '🤩 10 — Perfeito!';
+  }
+  function pintar(){
+    btns.forEach(function(b){
+      var on=Number(b.dataset.n)===atual;
+      b.classList.toggle('is-on',on);
+      b.setAttribute('aria-checked',on?'true':'false');
+    });
+    msg.textContent=atual?texto(atual):padrao;
+    msg.classList.remove('is-on');
+    if(atual){void msg.offsetWidth;msg.classList.add('is-on');}
+    clr.hidden=!atual;
+  }
+  btns.forEach(function(b){
+    b.addEventListener('click',function(){
+      var n=Number(b.dataset.n);
+      atual=(atual===n)?0:n; // tocar de novo na mesma nota remove
+      pintar();
+    });
+  });
+  clr.addEventListener('click',function(){atual=0;pintar();});
+  window.BarukiAvaliacao={
+    nota:function(){return atual||0;},
+    limpar:function(){atual=0;pintar();}
+  };
+})();
+</script>
 </body>
 </html>
