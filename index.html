@@ -2735,7 +2735,6 @@ background:#fff!important;border:1px solid #ead6a3;box-shadow:none;color:#2b2b2b
   <div class="formgroup baruki-order-note"><label for="orderNote">Observações do pedido (opcional)</label><textarea id="orderNote" rows="3" maxlength="500" placeholder="Ex.: ponto da carne, instruções para entrega... "></textarea></div>
   <div id="checkoutSummary" class="summary"></div>
   <button class="btn green baruki-send-order" style="margin-top:14px" onclick="sendWhatsApp()">📲 ENVIAR PEDIDO PARA O WHATSAPP</button>
-  <p class="baruki-checkout-tip">Confira os itens, o endereço e o total antes de enviar.</p>
 </div>
 </section>
 
@@ -5444,7 +5443,10 @@ function copyPix(){
   const pix='10894692925';
   const display=document.getElementById('pixKeyDisplay');
   if(display)display.textContent=pix;
-  const success=()=>toast('PIX copiado com sucesso!\n📲 Enviar o comprovante do PIX após o pedido para dar início ao pedido.',8000);
+  const success=()=>{
+    closePixPopup();
+    toast('PIX copiado com sucesso!\n📲 Enviar o comprovante do PIX após o pedido para dar início ao pedido.',8000);
+  };
   const fallback=()=>{
     const area=document.createElement('textarea');
     area.value=pix;
@@ -6383,7 +6385,7 @@ img, video, canvas, svg{
       '</div>';
     });
     const sub=cartSubtotal();
-    html+='<div class="summary"><div class="row"><span>Subtotal</span><strong>'+money(sub)+'</strong></div><div class="total row"><span>Total</span><strong>'+money(sub)+'</strong></div></div><button class="btn green" style="margin-top:14px;color:#fff !important;-webkit-text-fill-color:#fff !important" onclick="go(\'checkout\')">CONTINUAR PARA FINALIZAR →</button><div class="v2-note">O valor da entrega será calculado na próxima etapa.</div>';
+    html+='<div class="summary"><div class="row"><span>Subtotal</span><strong>'+money(sub)+'</strong></div><div class="total row"><span>Total</span><strong>'+money(sub)+'</strong></div></div><button class="btn green" style="margin-top:14px;color:#fff !important;-webkit-text-fill-color:#fff !important" onclick="go(\'checkout\')">CONTINUAR PARA FINALIZAR →</button>';
     box.innerHTML=html;updateBadge();
   };
   V2.clearCart=function(){
