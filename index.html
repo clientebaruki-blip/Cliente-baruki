@@ -2727,7 +2727,7 @@ background:#fff!important;border:1px solid #ead6a3;box-shadow:none;color:#2b2b2b
   </div>
 
   <div id="cashBox" class="formgroup" style="display:none">
-    <label>Valor recebido</label>
+    <label>Dinheiro recebido (Loja)</label>
     <input id="cashReceived" type="number" min="0" step="0.01" placeholder="0,00" oninput="updateCheckout()">
     <div id="changeMessage" class="notice" style="display:none"></div>
   </div>
@@ -4617,8 +4617,8 @@ function renderOrders(){
       '<div class="order-card-head"><div class="order-card-title">Pedido #'+(orderHistory.length-i)+'</div><div class="order-card-date">'+safeText(formatOrderDate(order.createdAt))+'</div></div>'+
       '<div class="order-card-details">'+
       '<div class="order-detail-row"><span>Cliente</span><strong>'+safeText(order.customer||'—')+'</strong></div>'+
-      '<div class="order-detail-row order-delivery-line"><strong>'+safeText(deliveryName==='Balcão'?'Retirada no balcão':'Entrega '+deliveryName+(order.address?' — '+order.address+(order.number?', '+order.number:''):''))+'</strong></div>'+
-      '<div class="order-detail-row"><span>Pagamento</span><strong>'+safeText(payment)+'</strong></div>'+
+      '<div class="order-detail-row order-delivery-line"><strong>'+safeText(deliveryName==='Comer no local'?'Comer no local':deliveryName==='Balcão'?'Retirada no balcão':'Entrega '+deliveryName+(order.address?' — '+order.address+(order.number?', '+order.number:''):''))+'</strong></div>'+
+      '<div class="order-detail-row"><span>Pagamento</span><strong>'+safeText(payment)+'</strong></div>'+(payment==='Dinheiro'&&Number(order.received)>0?'<div class="order-detail-row"><span>Dinheiro recebido (Loja)</span><strong>'+money(Number(order.received))+'</strong></div><div class="order-detail-row"><span>Troco do cliente</span><strong>'+money(Math.max(0,Number(order.received)-Number(order.total)))+'</strong></div>':'')+
       '<div class="order-items-full"><strong>Pedido completo</strong>'+itemText+'</div>'+
       '</div>'+
       '<div class="order-card-total"><span>Total</span><strong>'+money(order.total)+'</strong></div>'+
@@ -5498,7 +5498,7 @@ function updateCheckout(){
     }else{
       msg.style.display='block';
       msg.style.color='#69f0ae';
-      msg.textContent='Troco: '+money(received-total);
+      msg.textContent='Troco do cliente: '+money(received-total);
     }
   }else{
     msg.style.display='none';
@@ -5686,14 +5686,14 @@ function sendWhatsApp(){
   const orderNote=(document.getElementById('orderNote')?.value||'').trim();
   if(orderNote) message+='\n◆ *Observações do pedido:* '+orderNote.replace(/[\r\n]+/g,' ')+'\n';
 
-  message+='\n◆ *Resumo:*\n';
+  message+='◆ *Resumo:*\n';
   message+='• Subtotal: '+money(cartSubtotal())+'\n';
   if(selectedDelivery.name!=='Balcão' && selectedDelivery.name!=='Comer no local') message+='• Entrega: '+money(selectedDelivery.price)+'\n';
   message+='★ *TOTAL: '+money(total)+'*';
 
   if(selectedPayment==='Dinheiro'){
-    message+='\n• Valor recebido: '+money(received);
-    message+='\n• Troco: '+money(received-total);
+    message+='\n• Dinheiro recebido (Loja): '+money(received);
+    message+='\n• Troco do cliente: '+money(received-total);
   }
 
   // Inicia o cronômetro de 45 minutos no momento em que o pedido é enviado.
@@ -11615,6 +11615,553 @@ html body .pizza2-page .pizza2-total .total strong, html body .pizza2-page #twoF
 html body .pizza2-page .section.pizza2-note h3, html body .pizza2-page .pizza2-note h3{font-size:clamp(18px,5.83vw,24px)!important}
 html body .pizza2-page textarea#pizza2Note, html body .pizza2-page .pizza2-note textarea{font-size:clamp(15px,4.72vw,19px)!important}
 html body .pizza2-page button.pizza2-add, html body .pizza2-page .pizza2-add{font-size:clamp(18px,5.83vw,24px)!important}
+</style>
+<style id="baruki-attending-day-theme-contrast">
+/* Modo dia: selo ESTAMOS ATENDENDO com fundo verde escuro para o texto branco ficar legível. */
+body.day-theme .status-line #attendingMessage{
+  background:linear-gradient(135deg,#075b32 0%,#078b49 55%,#12ad58 100%)!important;
+  border-color:rgba(7,91,50,.9)!important;
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.35)!important;
+  box-shadow:0 3px 10px rgba(0,120,60,.28)!important;
+  opacity:1!important;
+}
+</style>
+<style id="baruki-day-theme-palette">
+/* Paleta do modo dia: tons creme e laranja suave, texto marrom escuro e cartões com borda quente.
+   Escopo exclusivo de body.day-theme; o modo noite não é afetado. */
+body.day-theme{
+  --bg:#fdf7f0;
+  --card:#fffdfa;
+  --card2:#fbf1e6;
+  --line:#ecdccb;
+  --white:#2b2118;
+  --muted:#7a6553;
+  background:linear-gradient(180deg,#fffdf9 0%,#fbf3e9 100%)!important;
+  color:#2b2118!important;
+}
+body.day-theme .header{
+  background:rgba(255,253,249,.96)!important;
+  border-color:#ecdccb!important;
+  box-shadow:0 2px 12px rgba(120,80,30,.08)!important;
+}
+body.day-theme .hero{
+  background:linear-gradient(145deg,#fff1e0,#fffdf9)!important;
+  border-color:#f2d6b6!important;
+  box-shadow:0 8px 22px rgba(230,140,40,.12)!important;
+}
+body.day-theme .status{
+  background:#fffdfa!important;
+  border-color:#ecdccb!important;
+  box-shadow:0 4px 14px rgba(120,80,30,.09)!important;
+}
+body.day-theme .store-hours{color:#7a6553!important}
+body.day-theme .product,
+body.day-theme .cart-item,
+body.day-theme .order-card,
+body.day-theme .summary,
+body.day-theme .panel,
+body.day-theme .section{
+  background:#fffdfa!important;
+  border-color:#ecdccb!important;
+  box-shadow:0 6px 18px rgba(120,80,30,.08)!important;
+  color:#2b2118!important;
+}
+body.day-theme .bottom{
+  background:rgba(255,253,250,.97)!important;
+  border-color:#ecdccb!important;
+  box-shadow:0 -4px 16px rgba(120,80,30,.08)!important;
+}
+body.day-theme .categories{
+  background:linear-gradient(180deg,rgba(251,243,233,.98),rgba(251,243,233,.85),transparent)!important;
+}
+body.day-theme .cat{
+  background:#fffdfa!important;
+  color:#5a4636!important;
+  border-color:#e6cfa8!important;
+}
+body.day-theme .categories .cat.active{
+  border-color:#e8860c!important;
+  box-shadow:0 0 0 1px rgba(232,134,12,.25),0 4px 14px rgba(232,134,12,.18)!important;
+}
+body.day-theme .option,
+body.day-theme .toggle{
+  background:#fbf3e9!important;
+  border-color:#ecdccb!important;
+  color:#2b2118!important;
+}
+body.day-theme textarea,
+body.day-theme input[type=text],
+body.day-theme input[type=number]{
+  background:#fffdfa!important;
+  color:#2b2118!important;
+  border-color:#e2cfb8!important;
+}
+body.day-theme input::placeholder,
+body.day-theme textarea::placeholder{color:#9a8571!important}
+body.day-theme .baruki-search-wrap{background:#fffdfa!important;border-color:#ecdccb!important}
+body.day-theme .baruki-search-input-wrap{background:#fffdfa!important}
+</style>
+<style id="baruki-day-theme-final">
+/* Modo dia completo: todas as áreas escuras que ainda aparecem no dia passam a claras.
+   Escopo exclusivo de html body.day-theme; o modo noite não é alterado. */
+html body.day-theme{background:#fbf5ee!important;color:#2b2118!important}
+html body.day-theme .header,
+html body.day-theme .status,
+html body.day-theme .hero{background:#fffdfa!important;border-color:#ecdccb!important;color:#2b2118!important}
+html body.day-theme .brand,
+html body.day-theme .brand span{color:#2b2118!important}
+html body.day-theme .brand span{color:#e8860c!important}
+html body.day-theme .store-hours{color:#7a6553!important}
+html body.day-theme .baruki-search-wrap{background:#fffdfa!important;color:#2b2118!important;border:2px solid #e8c48a!important;box-shadow:0 6px 18px rgba(120,80,30,.10)!important}
+html body.day-theme .baruki-search-wrap>label{color:#2b2118!important}
+html body.day-theme .baruki-search-input-wrap{background:#fffdfa!important}
+html body.day-theme .baruki-search-input-wrap input,
+html body.day-theme .baruki-search-wrap input[type=text]{background:#ffffff!important;color:#2b2118!important;border:1px solid #e2cfb8!important}
+html body.day-theme .baruki-search-wrap input::placeholder{color:#9a8571!important}
+html body.day-theme #categories{background:transparent!important}
+html body.day-theme #categories .cat{background:#fffdfa!important;color:#5a4636!important;border:2px solid #e6cfa8!important;box-shadow:0 3px 10px rgba(120,80,30,.08)!important}
+html body.day-theme #categories .cat span,
+html body.day-theme #categories .cat b,
+html body.day-theme #categories .cat strong{color:#5a4636!important}
+html body.day-theme #categories .cat.active{background:linear-gradient(180deg,#ffb74d,#ff9800)!important;border-color:#e8860c!important;box-shadow:0 4px 14px rgba(232,134,12,.25)!important}
+html body.day-theme #categories .cat.active,
+html body.day-theme #categories .cat.active span,
+html body.day-theme #categories .cat.active b,
+html body.day-theme #categories .cat.active strong{color:#2b1700!important}
+html body.day-theme .product,
+html body.day-theme .cart-item,
+html body.day-theme .order-card,
+html body.day-theme .summary,
+html body.day-theme .panel,
+html body.day-theme .section{background:#fffdfa!important;border-color:#ecdccb!important;color:#2b2118!important;box-shadow:0 6px 18px rgba(120,80,30,.08)!important}
+html body.day-theme .bottom{background:#fffdfa!important;border:1px solid #ecdccb!important;box-shadow:0 -4px 16px rgba(120,80,30,.08)!important}
+html body.day-theme .bottom .nav{background:#fff7ec!important;color:#6b4f2a!important;border:1.5px solid #f0c98e!important}
+html body.day-theme .bottom .nav span,
+html body.day-theme .bottom .nav .nav-icon{color:#6b4f2a!important}
+html body.day-theme .bottom .nav.active{background:linear-gradient(180deg,#ffb74d,#ff9800)!important;border-color:#e8860c!important;color:#2b1700!important}
+html body.day-theme .bottom .nav.active span,
+html body.day-theme .bottom .nav.active .nav-icon{color:#2b1700!important}
+html body.day-theme .option,
+html body.day-theme .toggle{background:#fbf3e9!important;border-color:#ecdccb!important;color:#2b2118!important}
+html body.day-theme textarea,
+html body.day-theme input[type=text],
+html body.day-theme input[type=number]{background:#ffffff!important;color:#2b2118!important;border-color:#e2cfb8!important}
+html body.day-theme .product h3,
+html body.day-theme .product h4,
+html body.day-theme .product .name,
+html body.day-theme .product .title{color:#2b2118!important}
+html body.day-theme .product p,
+html body.day-theme .product .desc,
+html body.day-theme .product small{color:#7a6553!important}
+</style>
+<style id="baruki-day-theme-checkout-labels">
+/* Modo dia: títulos e rótulos do carrinho/checkout e textos da barra inferior legíveis em fundo claro.
+   Escopo exclusivo de html body.day-theme; o modo noite não é alterado. */
+html body.day-theme .formgroup label,
+html body.day-theme .formgroup > label,
+html body.day-theme .baruki-order-note label,
+html body.day-theme .formgroup h3,
+html body.day-theme .section h3,
+html body.day-theme .section h2,
+html body.day-theme .section > label,
+html body.day-theme .settings-label,
+html body.day-theme .pix-label{color:#5a3a12!important;text-shadow:none!important}
+html body.day-theme .back,
+html body.day-theme button.back{color:#8a4b00!important;text-shadow:none!important;background:transparent!important}
+html body.day-theme .total,
+html body.day-theme .total strong{color:#1f8f4a!important}
+html body.day-theme .summary .row,
+html body.day-theme .summary .row span,
+html body.day-theme .summary .row strong{color:#2b2118!important}
+html body.day-theme nav.bottom button.nav span,
+html body.day-theme nav.bottom button.nav .nav-icon{color:#6b4f2a!important;-webkit-text-fill-color:#6b4f2a!important;text-shadow:none!important}
+html body.day-theme nav.bottom button.nav.active span,
+html body.day-theme nav.bottom button.nav.active .nav-icon{color:#2b1700!important;-webkit-text-fill-color:#2b1700!important}
+html body.day-theme nav.bottom button.nav{background:#fff7ec!important}
+html body.day-theme nav.bottom button.nav.active{background:linear-gradient(180deg,#ffb74d,#ff9800)!important}
+html body.day-theme #navBadge{color:#fff!important}
+</style>
+<style id="baruki-day-theme-option-selected">
+/* Modo dia: opção selecionada (PIX, Entrega, Retirada etc.) com destaque laranja e leve brilho.
+   Escopo exclusivo de html body.day-theme; o modo noite não é alterado. */
+html body.day-theme .option{transition:background .25s ease,border-color .25s ease,box-shadow .25s ease,transform .15s ease!important}
+html body.day-theme .option:active{transform:scale(.985)!important}
+html body.day-theme .option input[type=radio],
+html body.day-theme .option input[type=checkbox]{accent-color:#ff8f00!important;width:20px!important;height:20px!important}
+html body.day-theme .option:has(input:checked){
+  background:linear-gradient(120deg,#fff3e0 0%,#ffe6c2 100%)!important;
+  border:2px solid #ff9800!important;
+  box-shadow:0 0 0 4px rgba(255,152,0,.14),0 8px 20px rgba(255,140,0,.22)!important;
+  color:#3d2400!important;
+}
+html body.day-theme .option:has(input:checked) span,
+html body.day-theme .option:has(input:checked) strong{color:#3d2400!important;font-weight:800!important}
+html body.day-theme .option:has(input:checked)::after{
+  content:"✓";position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  width:24px;height:24px;border-radius:50%;background:#ff9800;color:#fff;
+  font-size:14px;font-weight:900;line-height:24px;text-align:center;box-shadow:0 2px 6px rgba(255,140,0,.4)
+}
+html body.day-theme .option{position:relative}
+html body.day-theme nav.bottom button.nav > span{color:#6b4f2a!important;opacity:1!important;text-shadow:none!important;-webkit-text-fill-color:#6b4f2a!important}
+html body.day-theme nav.bottom button.nav.active > span{color:#2b1700!important;-webkit-text-fill-color:#2b1700!important}
+</style>
+<style id="baruki-day-theme-pix-modal">
+/* Modo dia: janela de pagamento PIX clara, com destaque laranja e chave em verde legível.
+   Escopo exclusivo de html body.day-theme; o modo noite não é alterado. */
+html body.day-theme .pix-overlay{background:rgba(120,80,30,.28)!important;backdrop-filter:blur(6px)!important}
+html body.day-theme .pix-modal{
+  background:linear-gradient(160deg,#fffdf9 0%,#fff4e6 100%)!important;
+  border:1px solid #f0d2a8!important;
+  box-shadow:0 22px 60px rgba(120,70,20,.28),0 0 0 6px rgba(255,152,0,.10)!important;
+  color:#2b2118!important;
+}
+html body.day-theme .pix-modal h3{color:#8a4b00!important;font-weight:900!important;text-shadow:none!important}
+html body.day-theme .pix-symbol{background:linear-gradient(135deg,#1fa35b,#0f8a4a)!important;color:#fff!important;box-shadow:0 6px 16px rgba(15,138,74,.30)!important}
+html body.day-theme .pix-label{color:#7a5a2e!important;font-weight:900!important;letter-spacing:.6px}
+html body.day-theme .pix-key{
+  background:#ffffff!important;
+  border:2px dashed #f0b860!important;
+  color:#0f8a4a!important;
+  box-shadow:inset 0 2px 6px rgba(120,80,30,.06)!important;
+}
+html body.day-theme .pix-modal .pix-note{color:#7a6553!important}
+html body.day-theme .pix-close{background:#fff1dc!important;color:#8a4b00!important;border:1px solid #f0d2a8!important;box-shadow:0 2px 8px rgba(120,80,30,.15)!important}
+html body.day-theme .pix-button,
+html body.day-theme .pix-modal .btn.pix-button{
+  background:linear-gradient(135deg,#ffb74d,#ff9800)!important;
+  color:#2b1700!important;
+  border:0!important;
+  box-shadow:0 8px 18px rgba(255,140,0,.32)!important;
+  font-weight:900!important;
+}
+html body.day-theme .pix-button:active{transform:scale(.98)!important}
+html body.day-theme #pixBox,
+html body.day-theme .pix-box{background:#fffdfa!important;border:1px solid #ecdccb!important;color:#2b2118!important}
+</style>
+<style id="baruki-day-theme-bottom-labels">
+/* Modo dia: nomes da barra inferior (Cardápio, Meus pedidos, Carrinho, Configurações) em marrom legível.
+   Usa seletores por id para vencer a regra que força o texto branco. Escopo exclusivo de html body.day-theme. */
+html body.day-theme nav.bottom #nMenu:not(.x) > span:not(.nav-icon):not(.nav-badge),
+html body.day-theme nav.bottom #nOrders:not(.x) > span:not(.nav-icon):not(.nav-badge),
+html body.day-theme nav.bottom #nCart:not(.x) > span:not(.nav-icon):not(.nav-badge),
+html body.day-theme nav.bottom #settingsFab:not(.x) > span:not(.nav-icon):not(.nav-badge){
+  color:#6b4f2a!important;
+  -webkit-text-fill-color:#6b4f2a!important;
+  text-shadow:none!important;
+  font-weight:800!important;
+}
+html body.day-theme nav.bottom #nMenu.active:not(.x) > span:not(.nav-icon):not(.nav-badge){
+  color:#2b1700!important;
+  -webkit-text-fill-color:#2b1700!important;
+}
+html body.day-theme nav.bottom .nav-icon{color:initial!important;-webkit-text-fill-color:initial!important}
+html body.day-theme nav.bottom .nav{background:#fff7ec!important;border:1.5px solid #f0c98e!important;box-shadow:0 4px 12px rgba(120,80,30,.08)!important}
+html body.day-theme nav.bottom .nav.active{background:linear-gradient(180deg,#ffb74d,#ff9800)!important;border-color:#e8860c!important;box-shadow:0 4px 14px rgba(255,152,0,.30)!important}
+</style>
+<style id="baruki-day-theme-prices">
+/* Modo dia: valores dos itens em verde, negrito e com contorno. Escopo exclusivo de html body.day-theme. */
+html body.day-theme .product .price,
+html body.day-theme .price{
+  color:#1fa34f!important;
+  -webkit-text-fill-color:#1fa34f!important;
+  font-weight:1000!important;
+  -webkit-text-stroke:.7px #0b5a2b!important;
+  paint-order:stroke fill!important;
+  text-shadow:0 1px 0 rgba(11,90,43,.25)!important;
+  letter-spacing:.3px!important;
+}
+html body.day-theme .product .price b,
+html body.day-theme .product .price strong,
+html body.day-theme .pg-i b,
+html body.day-theme .price b{
+  color:#1fa34f!important;
+  -webkit-text-fill-color:#1fa34f!important;
+  font-weight:1000!important;
+  -webkit-text-stroke:.7px #0b5a2b!important;
+  paint-order:stroke fill!important;
+}
+html body.day-theme .product .price small,
+html body.day-theme .pg-i small{
+  color:#0b5a2b!important;
+  -webkit-text-fill-color:#0b5a2b!important;
+  -webkit-text-stroke:0!important;
+  font-weight:900!important;
+}
+html body.day-theme .product .price s{
+  color:#9a8571!important;
+  -webkit-text-fill-color:#9a8571!important;
+  -webkit-text-stroke:0!important;
+  font-weight:700!important;
+}
+</style>
+<style id="baruki-day-theme-pizza-builder">
+/* Modo dia: tela "Monte sua Pizza" clara, com títulos legíveis e destaques laranja.
+   Escopo exclusivo de html body.day-theme; o modo noite não é alterado. */
+html body.day-theme .pizza2-page{color:#2b2118!important}
+html body.day-theme .pizza2-page .pizza2-top{
+  background:linear-gradient(160deg,#fffdf9,#fff3e3)!important;
+  border:1px solid #f0d2a8!important;
+  box-shadow:0 10px 26px rgba(120,80,30,.10)!important;
+}
+html body.day-theme .pizza2-page .pizza2-kicker{color:#c46a00!important;font-weight:900!important}
+html body.day-theme .pizza2-page .pizza2-title-row h2,
+html body.day-theme .pizza2-page .pizza2-title-row h3{color:#2b2118!important;text-shadow:none!important}
+html body.day-theme .pizza2-page .pizza2-title-row p,
+html body.day-theme .pizza2-page .pizza2-top p,
+html body.day-theme .pizza2-page .pizza2-top small,
+html body.day-theme .pizza2-page .pizza2-progress-text{color:#6b4f2a!important}
+html body.day-theme .pizza2-page .pizza2-progress{background:#f3e3cc!important}
+html body.day-theme .pizza2-page .pizza2-progress .step{background:#f0dcbf!important}
+html body.day-theme .pizza2-page .pizza2-progress .step.active{background:linear-gradient(90deg,#ffb74d,#ff9800)!important}
+html body.day-theme .pizza2-page .pizza2-half-preview,
+html body.day-theme .pizza2-page .pizza2-live-preview{background:#fff8ef!important;border:1px solid #f0d2a8!important;color:#2b2118!important}
+html body.day-theme .pizza2-page .pizza2-half-name,
+html body.day-theme .pizza2-page .pizza2-half-cat,
+html body.day-theme .pizza2-page .pizza2-half-tag{color:#5a3a12!important}
+html body.day-theme .pizza2-page .pizza2-choice{
+  background:#fffdfa!important;
+  border:2px solid #f0c98e!important;
+  box-shadow:0 8px 22px rgba(120,80,30,.09)!important;
+  color:#2b2118!important;
+}
+html body.day-theme .pizza2-page .pizza2-choice.selected{
+  border-color:#ff9800!important;
+  box-shadow:0 0 0 4px rgba(255,152,0,.14),0 10px 26px rgba(255,140,0,.20)!important;
+}
+html body.day-theme .pizza2-page .pizza2-choice-head h3{color:#2b2118!important;text-shadow:none!important}
+html body.day-theme .pizza2-page .pizza2-choice-head small{color:#7a6553!important}
+html body.day-theme .pizza2-page .pizza2-number{
+  background:#fff1dc!important;border:2px solid #ff9800!important;color:#8a4b00!important;box-shadow:none!important
+}
+html body.day-theme .pizza2-page .pizza2-choice.selected .pizza2-number{background:linear-gradient(135deg,#ffb74d,#ff9800)!important;color:#fff!important}
+html body.day-theme .pizza2-page .pizza2-done{background:#e6f7ec!important;color:#14823f!important;border:1px solid #9fdcb6!important}
+html body.day-theme .pizza2-page .pizza2-field-label,
+html body.day-theme .pizza2-page label.pizza2-field-label{color:#6b4f2a!important;font-weight:900!important;letter-spacing:.4px!important;text-shadow:none!important}
+html body.day-theme .pizza2-page .pizza2-select,
+html body.day-theme .pizza2-page select.pizza2-select{
+  background:#ffffff!important;color:#2b2118!important;border:1.5px solid #e6cfa8!important;
+  box-shadow:0 3px 10px rgba(120,80,30,.07)!important
+}
+html body.day-theme .pizza2-page .pizza2-select-wrap::after{border-color:#ff9800!important}
+html body.day-theme .pizza2-page .pizza2-selected{
+  background:#fff7ec!important;border:1px dashed #e6c59a!important;color:#6b4f2a!important;
+  box-shadow:none!important
+}
+html body.day-theme .pizza2-page .pizza2-selected .check{color:#c9a27a!important}
+html body.day-theme .pizza2-page .pizza2-choice.selected .pizza2-selected{background:#fff0d9!important;border:1px solid #ffb74d!important;color:#8a4b00!important}
+html body.day-theme .pizza2-page .pizza2-plus{color:#ff9800!important}
+html body.day-theme .pizza2-page .pizza2-plus span{color:#ff9800!important;text-shadow:none!important}
+html body.day-theme .pizza2-page .pizza2-lock,
+html body.day-theme .pizza2-page .pizza2-tip{background:#fff8ef!important;border:1px solid #f0d2a8!important;color:#6b4f2a!important}
+html body.day-theme .pizza2-page .pizza2-section-title h3{color:#2b2118!important}
+html body.day-theme .pizza2-page .pizza2-section-title span{color:#7a6553!important}
+html body.day-theme .pizza2-page .pizza2-radio{background:#fffdfa!important;border:1.5px solid #ecdccb!important;color:#2b2118!important}
+html body.day-theme .pizza2-page .pizza2-total{background:#fffdfa!important;border:1px solid #ecdccb!important;color:#2b2118!important}
+html body.day-theme .pizza2-page .pizza2-total .total{color:#1fa34f!important;font-weight:1000!important}
+html body.day-theme .pizza2-page .pizza2-add{background:linear-gradient(135deg,#ffb74d,#ff9800)!important;color:#2b1700!important;border:0!important;box-shadow:0 8px 18px rgba(255,140,0,.30)!important;font-weight:900!important}
+html body.day-theme .pizza2-page .pizza2-fillings,
+html body.day-theme .pizza2-page .pizza2-border{background:#fffdfa!important;border-color:#ecdccb!important;color:#2b2118!important}
+</style>
+<style id="baruki-day-theme-pizza-arrows">
+/* Modo dia: setas dos seletores de categoria e sabor com o mesmo visual do modo noite
+   (círculo, centralizado; verde na primeira metade e azul na segunda). Escopo exclusivo de html body.day-theme. */
+html body.day-theme .pizza2-page .pizza2-select-wrap:after{
+  content:"⌄"!important;
+  display:grid!important;
+  place-items:center!important;
+  width:34px!important;
+  height:34px!important;
+  right:12px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  padding-bottom:6px!important;
+  box-sizing:border-box!important;
+  border-radius:50%!important;
+  font-size:22px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  color:#ffffff!important;
+  background:linear-gradient(145deg,#ff9238,#ffb000)!important;
+  box-shadow:0 3px 10px rgba(255,100,0,.35)!important;
+}
+html body.day-theme #pizza2Choice1 .pizza2-select-wrap:after{
+  background:linear-gradient(145deg,#3ddc84,#00a85a)!important;
+  box-shadow:0 3px 10px rgba(0,200,100,.40)!important;
+}
+html body.day-theme #pizza2Choice2 .pizza2-select-wrap:after{
+  background:linear-gradient(145deg,#5ab8ff,#1e6fe0)!important;
+  box-shadow:0 3px 10px rgba(30,120,230,.40)!important;
+}
+</style>
+<style id="baruki-day-theme-pizza-total">
+/* Modo dia: resumo da pizza (Pizza G, Borda e TOTAL) em cartão claro e elegante.
+   Usa seletores por id para vencer o fundo escuro original. Escopo exclusivo de html body.day-theme. */
+html body.day-theme #twoFlavorTotal,
+html body.day-theme .pizza2-page #twoFlavorTotal,
+html body.day-theme .pizza2-page .pizza2-total{
+  background:linear-gradient(180deg,#fffdf9,#fff6ea)!important;
+  background-color:#fffdf9!important;
+  color:#2b2118!important;
+  border:1px solid #ecdccb!important;
+  border-radius:16px!important;
+  box-shadow:0 8px 22px rgba(120,80,30,.10)!important;
+  padding:12px 14px!important;
+}
+html body.day-theme #twoFlavorTotal > .row:not(.total){
+  color:#6b4f2a!important;
+  border-bottom:1px dashed #ecdccb!important;
+}
+html body.day-theme #twoFlavorTotal > .row:not(.total) > span{color:#6b4f2a!important;-webkit-text-fill-color:#6b4f2a!important;font-weight:700!important}
+html body.day-theme #twoFlavorTotal > .row:not(.total) > strong{
+  color:#1fa34f!important;-webkit-text-fill-color:#1fa34f!important;font-weight:1000!important;
+  -webkit-text-stroke:.6px #0b5a2b!important;paint-order:stroke fill!important;text-shadow:none!important
+}
+html body.day-theme #twoFlavorTotal > .total{
+  background:linear-gradient(135deg,#eaf9f0 0%,#d8f3e3 100%)!important;
+  border:2px solid #2fbf6a!important;
+  border-radius:14px!important;
+  box-shadow:0 0 0 3px rgba(47,191,106,.12),0 6px 16px rgba(31,163,79,.16)!important;
+  margin:10px 0 4px!important;
+  padding:12px 16px!important;
+}
+html body.day-theme #twoFlavorTotal > .total > span{color:#2b2118!important;-webkit-text-fill-color:#2b2118!important;font-weight:900!important;letter-spacing:.8px!important;text-shadow:none!important}
+html body.day-theme #twoFlavorTotal > .total > strong{
+  color:#1fa34f!important;-webkit-text-fill-color:#1fa34f!important;font-weight:1000!important;
+  -webkit-text-stroke:.8px #0b5a2b!important;paint-order:stroke fill!important;text-shadow:none!important
+}
+</style>
+<style id="baruki-day-theme-prices-normal-weight">
+/* Modo dia: valores dos itens e do total sem negrito, mantendo a cor verde e o contorno. Escopo exclusivo de html body.day-theme. */
+html body.day-theme .product .price,
+html body.day-theme .price,
+html body.day-theme .product .price b,
+html body.day-theme .product .price strong,
+html body.day-theme .pg-i b,
+html body.day-theme .price b,
+html body.day-theme #twoFlavorTotal > .row:not(.total) > strong,
+html body.day-theme #twoFlavorTotal > .total > strong{
+  font-weight:400!important;
+}
+</style>
+<style id="baruki-day-theme-orders">
+/* Modo dia: tela "Meus pedidos" clara, com cartões creme, textos legíveis e valores em verde.
+   Escopo exclusivo de html body.day-theme; o modo noite não é alterado. */
+html body.day-theme #orders .notice,
+html body.day-theme #orders .orders-intro,
+html body.day-theme #orders > .notice{
+  background:#fffdfa!important;border:1px solid #ecdccb!important;color:#5a3a12!important;
+  box-shadow:0 4px 14px rgba(120,80,30,.08)!important;border-radius:14px!important
+}
+html body.day-theme .orders-toolbar{background:transparent!important}
+html body.day-theme .orders-toolbar button.danger,
+html body.day-theme #ordersToolbarV2 button.danger{
+  background:linear-gradient(135deg,#ff6b5b,#e8453a)!important;color:#fff!important;border:0!important;
+  box-shadow:0 6px 16px rgba(232,69,58,.28)!important;font-weight:900!important;text-shadow:none!important
+}
+html body.day-theme .order-card{
+  background:linear-gradient(180deg,#fffdf9,#fff6ea)!important;
+  border:1px solid #ecdccb!important;border-radius:18px!important;
+  box-shadow:0 8px 22px rgba(120,80,30,.10)!important;color:#2b2118!important;
+  padding:12px!important
+}
+html body.day-theme .order-card-head{background:transparent!important;color:#2b2118!important}
+html body.day-theme .order-card-title{color:#8a4b00!important;font-weight:900!important;text-shadow:none!important}
+html body.day-theme .order-card-date{color:#7a6553!important;text-shadow:none!important}
+html body.day-theme .order-card-details{
+  background:#ffffff!important;border:1px solid #ecdccb!important;border-radius:14px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8)!important;color:#2b2118!important;padding:12px!important
+}
+html body.day-theme .order-detail-row{color:#2b2118!important;border-bottom:1px dashed #ecdccb!important}
+html body.day-theme .order-detail-row span,
+html body.day-theme .order-detail-row label{color:#7a6553!important}
+html body.day-theme .order-detail-row strong{color:#2b2118!important}
+html body.day-theme .order-delivery-line{color:#5a3a12!important}
+html body.day-theme .order-items-full,
+html body.day-theme .order-item-full,
+html body.day-theme .order-card-items{color:#2b2118!important;border-color:#ecdccb!important}
+html body.day-theme .order-item-full{border-bottom:1px dashed #ecdccb!important}
+html body.day-theme .order-item-full small,
+html body.day-theme .order-item-full .sub,
+html body.day-theme .order-item-full .adds{color:#7a6553!important}
+html body.day-theme .order-item-full strong,
+html body.day-theme .order-item-full .price{color:#1fa34f!important;font-weight:400!important;-webkit-text-stroke:.6px #0b5a2b!important;paint-order:stroke fill!important}
+html body.day-theme .order-card-total{
+  background:linear-gradient(135deg,#eaf9f0,#d8f3e3)!important;border:2px solid #2fbf6a!important;
+  color:#2b2118!important;border-radius:14px!important;padding:10px 14px!important
+}
+html body.day-theme .order-card-total strong,
+html body.day-theme .order-card-total span{color:#1fa34f!important;-webkit-text-fill-color:#1fa34f!important;-webkit-text-stroke:.6px #0b5a2b!important;font-weight:400!important}
+html body.day-theme .order-delete-single{background:#fff1ee!important;color:#c0392b!important;border:1px solid #f5b5ab!important;font-weight:800!important}
+html body.day-theme .order-edit{background:#fff8ef!important;border:1px solid #f0d2a8!important;color:#2b2118!important;border-radius:14px!important}
+html body.day-theme .order-edit label{color:#6b4f2a!important}
+html body.day-theme .order-edit-actions button{font-weight:800!important}
+html body.day-theme .orders-empty{background:#fffdfa!important;color:#7a6553!important;border:1px dashed #e6c59a!important;border-radius:14px!important}
+</style>
+<style id="baruki-day-theme-orders-layout">
+/* Modo dia: organização da tela "Meus pedidos" (espaçamento, cabeçalho, itens e total).
+   Escopo exclusivo de html body.day-theme; o modo noite não é alterado. */
+html body.day-theme #orders .orders-toolbar{display:flex!important;justify-content:center!important;margin:6px 0 14px!important}
+html body.day-theme #orders .orders-toolbar button.danger{width:100%!important;max-width:420px!important;padding:12px 16px!important;border-radius:14px!important}
+html body.day-theme #orders .order-history{display:grid!important;gap:16px!important}
+html body.day-theme .order-card{padding:14px!important;margin:0!important}
+html body.day-theme .order-card-head{
+  display:flex!important;justify-content:space-between!important;align-items:center!important;
+  gap:10px!important;margin:0 0 12px!important;padding-bottom:10px!important;
+  border-bottom:1px solid #f0e2d0!important
+}
+html body.day-theme .order-card-title{
+  font-size:16px!important;letter-spacing:.2px!important;
+  padding:5px 12px!important;border-radius:999px!important;
+  background:linear-gradient(135deg,#fff1dc,#ffe3b8)!important;border:1px solid #ffc978!important
+}
+html body.day-theme .order-card-date{
+  font-size:12px!important;padding:5px 10px!important;border-radius:999px!important;
+  background:#f6efe6!important;color:#6b4f2a!important;white-space:nowrap!important
+}
+html body.day-theme .order-card-details{padding:14px!important}
+html body.day-theme .order-detail-row{padding:8px 0!important;align-items:center!important;font-size:14px!important}
+html body.day-theme .order-detail-row strong{font-size:15px!important}
+html body.day-theme .order-items-full{margin-top:12px!important;padding-top:10px!important;border-top:2px solid #ffe0b2!important}
+html body.day-theme .order-item-full{
+  display:block!important;padding:10px 0!important;line-height:1.4!important;font-size:14px!important;
+  border-bottom:1px dashed #ecdccb!important
+}
+html body.day-theme .order-item-full > strong{display:block!important;font-size:14.5px!important;color:#2b2118!important;margin-bottom:2px!important}
+html body.day-theme .order-item-full small,
+html body.day-theme .order-item-full .sub,
+html body.day-theme .order-item-full .adds{display:block!important;font-size:12.5px!important;color:#7a6553!important;margin-top:2px!important}
+html body.day-theme .order-card-total{margin-top:12px!important;padding:12px 14px!important;font-size:15px!important}
+html body.day-theme .order-delete-single{width:100%!important;margin-top:12px!important;padding:10px!important;border-radius:12px!important}
+</style>
+<style id="baruki-day-theme-orders-organized">
+/* Modo dia: itens do pedido organizados em linha (nome à esquerda, valor à direita, adicionais e observações abaixo).
+   Escopo exclusivo de html body.day-theme; o modo noite não é alterado. */
+html body.day-theme .order-items-full > strong{
+  display:block!important;font-size:12px!important;letter-spacing:.9px!important;text-transform:uppercase!important;
+  color:#8a4b00!important;font-weight:900!important;margin-bottom:6px!important
+}
+html body.day-theme .order-item-full{
+  display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+  justify-content:space-between!important;column-gap:10px!important;row-gap:3px!important;
+  padding:11px 0!important;color:#2b2118!important
+}
+html body.day-theme .order-item-full > strong{
+  flex:1 1 0!important;min-width:0!important;font-size:14.5px!important;font-weight:800!important;
+  color:#2b2118!important;line-height:1.3!important
+}
+html body.day-theme .order-item-full > small{
+  flex:0 0 100%!important;display:block!important;font-size:12.5px!important;color:#7a6553!important;
+  line-height:1.35!important;padding-left:2px!important
+}
+html body.day-theme .order-card-total{
+  display:flex!important;justify-content:space-between!important;align-items:center!important;
+  padding:12px 14px!important;margin-top:14px!important
+}
+html body.day-theme .order-card-total > span{color:#2b2118!important;font-weight:900!important;letter-spacing:.6px!important;text-transform:uppercase!important;font-size:13px!important}
+html body.day-theme .order-card-total > strong{font-size:18px!important}
+html body.day-theme .order-delete-single{display:block!important;text-align:center!important}
 </style>
 </body>
 </html>
