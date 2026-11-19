@@ -2727,8 +2727,14 @@ background:#fff!important;border:1px solid #ead6a3;box-shadow:none;color:#2b2b2b
   </div>
 
   <div id="cashBox" class="formgroup" style="display:none">
-    <label>Dinheiro recebido (Loja)</label>
-    <input id="cashReceived" type="number" min="0" step="0.01" placeholder="0,00" oninput="updateCheckout()">
+    <label>💵 Dinheiro recebido (Loja)</label>
+    <div class="cash-input-wrap"><span class="cash-prefix">R$</span><input id="cashReceived" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00" oninput="updateCheckout()"></div>
+    <div class="cash-quick">
+      <button type="button" data-v="50" onclick="setCashQuick(50)">R$ 50</button>
+      <button type="button" data-v="100" onclick="setCashQuick(100)">R$ 100</button>
+      <button type="button" data-v="200" onclick="setCashQuick(200)">R$ 200</button>
+      <button type="button" onclick="setCashQuick(0)">Não preciso de troco</button>
+    </div>
     <div id="changeMessage" class="notice" style="display:none"></div>
   </div>
 
@@ -5498,6 +5504,13 @@ function copyPix(){
   }
 }
 
+function setCashQuick(v){
+  const total=cartSubtotal()+(selectedDelivery?selectedDelivery.price:0);
+  const input=document.getElementById('cashReceived');
+  if(!input)return;
+  input.value=(v>0?v:total).toFixed(2);
+  updateCheckout();
+}
 function updateCheckout(){
   const sub=cartSubtotal();
   const deliveryPrice=selectedDelivery?selectedDelivery.price:0;
@@ -5511,6 +5524,8 @@ function updateCheckout(){
     (pickupTime?'<div class="row"><span>Retirada</span><strong>'+pickupTime+'</strong></div>':'')+
     '<div class="total row"><span>Total</span><strong>'+money(total)+'</strong></div>';
 
+  document.querySelectorAll('.cash-quick [data-v]').forEach(function(b){b.style.display=Number(b.dataset.v)>=total?'':'none';});
+
   const msg=document.getElementById('changeMessage');
 
   if(selectedPayment==='Dinheiro'){
@@ -5521,11 +5536,13 @@ function updateCheckout(){
     }else if(received<total){
       msg.style.display='block';
       msg.style.color='#ff5252';
+      msg.classList.remove('troco-ok');
       msg.textContent='Falta '+money(total-received);
     }else{
       msg.style.display='block';
       msg.style.color='#69f0ae';
-      msg.textContent='Troco do cliente: '+money(received-total);
+      msg.classList.add('troco-ok');
+      msg.innerHTML='💵 Troco do cliente: <strong>'+money(received-total)+'</strong>';
     }
   }else{
     msg.style.display='none';
@@ -12267,6 +12284,22 @@ html body #checkoutSummary .row.total strong,
 html body.day-theme #checkoutSummary .row.total,
 html body.day-theme #checkoutSummary .row.total span,
 html body.day-theme #checkoutSummary .row.total strong{color:#000 !important;-webkit-text-fill-color:#000 !important}
+/* Troco do cliente: texto um pouco maior. */
+#changeMessage{font-size:17px !important}
+/* Dinheiro/troco: bloco em cartão, troco verde, R$ no campo, atalhos de valor. */
+html body #cashBox{background:var(--card,#242424);border:1px solid var(--line,#333);border-radius:14px;padding:14px;margin:12px 0 22px}
+html body.day-theme #cashBox{background:#fff;border-color:#e6e6e6}
+html body #cashBox .cash-input-wrap{position:relative}
+html body #cashBox .cash-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:900;color:#aaa;pointer-events:none}
+html body #checkout #cashReceived{padding-left:46px !important}
+html body #cashBox .cash-quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+html body #cashBox .cash-quick button{border:1px solid #ff9800;background:transparent;color:#ff9800;border-radius:999px;padding:8px 14px;font-size:14px;font-weight:800}
+html body #cashBox .cash-quick button:active{background:#ff9800;color:#fff}
+html body #checkout #changeMessage{margin:12px 0 0}
+html body #checkout #changeMessage.troco-ok{background:#16a34a !important;border-color:#22c55e !important;color:#fff !important}
+html body #checkout #changeMessage.troco-ok strong{font-weight:900}
+/* Carrinho: remover o espaço vazio acima de "Seu carrinho". */
+#cart > .container > h2{display:none !important}
 </style>
 <script id="baruki-avaliacao-cardapio-js">
 /* Avaliação opcional: só guarda a nota na memória da página; vai na mensagem do WhatsApp apenas se escolhida. */
