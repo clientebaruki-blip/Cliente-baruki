@@ -2928,7 +2928,7 @@ background:#fff!important;border:1px solid #ead6a3;box-shadow:none;color:#2b2b2b
           <li>Remover produtos.</li>
           <li>Conferir adicionais e ingredientes removidos.</li>
           <li>Ver observações.</li>
-          <li>Conferir subtotal, taxa de entrega e valor total.</li>
+          <li>Conferir taxa de entrega e valor total.</li>
         </ul>
         <p><strong>Antes de finalizar, confira atentamente seu pedido.</strong></p>
       </section>
@@ -4481,7 +4481,7 @@ function buildOrderMessage(order){
     message+='──────────────\n';
   });
   const subtotal=(order.items||[]).reduce((s,i)=>s+(Number(i.unitPrice)||0)*(Number(i.qty)||0),0);
-  message+='\n*Subtotal:* '+money(subtotal)+'\n';
+  message+='\n';
   if(order.delivery?.name && order.delivery.name!=='Balcão' && order.delivery.name!=='Comer no local')message+='*Entrega:* '+money(Number(order.delivery.price)||0)+'\n';
   message+='*TOTAL:* '+money(Number(order.total)||subtotal+(order.delivery?.name==='Balcão'?0:(Number(order.delivery?.price)||0)));
   return message;
@@ -5357,7 +5357,6 @@ function renderCart(){
 
   html+=
     '<div class="summary">'+
-      '<div class="row"><span>Subtotal</span><strong>'+money(sub)+'</strong></div>'+
       '<div class="total row"><span>Total</span><strong>'+money(sub)+'</strong></div>'+
     '</div>'+
     '<button class="btn green" style="margin-top:14px" onclick="go(\'checkout\')">CONTINUAR</button>';
@@ -5509,7 +5508,6 @@ function updateCheckout(){
 
   const pickupTime=selectedDelivery?.name==='Balcão'?(document.getElementById('pickupTime')?.value||''):'';
   box.innerHTML=
-    '<div class="row"><span>Subtotal</span><strong>'+money(sub)+'</strong></div>'+
     (pickupTime?'<div class="row"><span>Retirada</span><strong>'+pickupTime+'</strong></div>':'')+
     '<div class="total row"><span>Total</span><strong>'+money(total)+'</strong></div>';
 
@@ -5716,7 +5714,6 @@ function sendWhatsApp(){
   if(orderNote) message+='\n◆ *Observações do pedido:* '+orderNote.replace(/[\r\n]+/g,' ')+'\n';
 
   message+='◆ *Resumo:*\n';
-  message+='• Subtotal: '+money(cartSubtotal())+'\n';
   if(selectedDelivery.name!=='Balcão' && selectedDelivery.name!=='Comer no local') message+='• Entrega: '+money(selectedDelivery.price)+'\n';
   message+='★ *TOTAL: '+money(total)+'*';
 
@@ -6413,7 +6410,7 @@ img, video, canvas, svg{
       '</div>';
     });
     const sub=cartSubtotal();
-    html+='<div class="summary"><div class="row"><span>Subtotal</span><strong>'+money(sub)+'</strong></div><div class="total row"><span>Total</span><strong>'+money(sub)+'</strong></div></div><button class="btn green" style="margin-top:14px;color:#fff !important;-webkit-text-fill-color:#fff !important" onclick="go(\'checkout\')">CONTINUAR PARA FINALIZAR →</button>';
+    html+='<div class="summary"><div class="total row"><span>Total</span><strong>'+money(sub)+'</strong></div></div><button class="btn green" style="margin-top:14px;color:#fff !important;-webkit-text-fill-color:#fff !important" onclick="go(\'checkout\')">CONTINUAR PARA FINALIZAR →</button>';
     box.innerHTML=html;updateBadge();
   };
   V2.clearCart=function(){
@@ -12256,6 +12253,20 @@ body.day-theme .baruki-aval-scale{color:#888}
 body.day-theme .baruki-aval-msg{color:#555}
 body.day-theme .baruki-aval-msg.is-on{color:#a86a00}
 body.day-theme .baruki-aval-clear{border-color:#ccc;color:#555}
+/* Carrinho: texto do TOTAL em preto. */
+html body #cartContent .summary .row.total,
+html body #cartContent .summary .row.total span,
+html body #cartContent .summary .row.total strong,
+html body.day-theme #cartContent .summary .row.total,
+html body.day-theme #cartContent .summary .row.total span,
+html body.day-theme #cartContent .summary .row.total strong{color:#000 !important;-webkit-text-fill-color:#000 !important}
+/* Finalizar pedido: texto do TOTAL em preto. */
+html body #checkoutSummary .row.total,
+html body #checkoutSummary .row.total span,
+html body #checkoutSummary .row.total strong,
+html body.day-theme #checkoutSummary .row.total,
+html body.day-theme #checkoutSummary .row.total span,
+html body.day-theme #checkoutSummary .row.total strong{color:#000 !important;-webkit-text-fill-color:#000 !important}
 </style>
 <script id="baruki-avaliacao-cardapio-js">
 /* Avaliação opcional: só guarda a nota na memória da página; vai na mensagem do WhatsApp apenas se escolhida. */
