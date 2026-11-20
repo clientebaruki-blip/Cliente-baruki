@@ -2604,7 +2604,7 @@ html.ctl-mbiblica-off #mensagemBiblicaDiaria{display:none!important}
   <div class="brand">LANCHONETE <span>BARUKI</span></div>
   <div class="sub"><span class="order-message"><span class="order-pulse">📲</span> <span class="order-line">FAÇA SEU PEDIDO COM <strong>RAPIDEZ!</strong></span><span class="order-line order-whatsapp">Envie diretamente para o <strong>WhatsApp</strong> <span class="order-pulse">💬</span></span></span></div>
   <div class="status" aria-live="polite">
-  <div class="status-line"><span id="statusDot" class="dot"></span><span id="statusText">VERIFICANDO...</span><span id="attendingMessage" class="attending-message" aria-hidden="true">ESTAMOS ATENDENDO</span></div>
+  <div class="status-line"><span id="statusDot" class="dot"></span><span id="statusText">VERIFICANDO...</span></div>
 </div>
 </header>
 
@@ -12471,6 +12471,30 @@ html body #checkout #changeMessage.troco-ok strong{font-weight:900}
   55%{transform:rotateX(12deg);opacity:1;filter:blur(0)}
   100%{transform:rotateX(0);opacity:1}
 }
+</style>
+
+<style id="baruki-loja-aberta-igual-fechada">
+/* Status aberto: mesmo formato do status fechado, com cor verde. */
+.status-line #statusText.open-pulse{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  background:#08a83e!important;
+  background-image:none!important;
+  border:2px solid #20d45b!important;
+  border-radius:999px!important;
+  padding:7px 12px!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.65)!important;
+  box-shadow:0 0 10px rgba(0,210,75,.35),inset 0 0 8px rgba(255,255,255,.08)!important;
+  animation:baruki-open-glow 1.2s ease-in-out infinite!important;
+  transform:none!important;
+}
+@keyframes baruki-open-glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25);box-shadow:0 0 17px rgba(0,210,75,.45)}}
+@media(prefers-reduced-motion:reduce){.status-line #statusText.open-pulse{animation:none!important}}
+.status-line #statusText.open-pulse::before{
+  display:block!important;inset:-3px!important;border:2px solid #20d45b!important;
+  opacity:1!important;border-radius:999px!important;animation:none!important;box-shadow:none!important;
+}
+.status-line #statusText.open-pulse::after{display:none!important}
 </style>
 <script id="bk-digital-flip-js">
 (function(){
