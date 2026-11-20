@@ -2108,6 +2108,122 @@ html body #cartContent .summary .row + .row{border-top-color:#e2e2e2 !important}
 html body .baruki-search-wrap{border:2px solid #D4AF37 !important;box-shadow:0 0 0 1px rgba(255,215,0,.25),0 0 12px rgba(212,175,55,.35) !important}
 </style>
 <style id="baruki-opt-icones">.option .opt-ico{display:inline-flex;align-items:center;justify-content:center;width:26px;flex:0 0 26px;font-size:20px;line-height:1;margin-right:-2px}.option .opt-ico svg{display:block}</style>
+<style id="baruki-visual-digital-final">
+/* ===== Camada final: visual moderno + animações ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --bk-ease: cubic-bezier(.22,1,.36,1);
+  --bk-shadow-sm: 0 2px 8px rgba(0,0,0,.18);
+  --bk-shadow-md: 0 10px 28px rgba(0,0,0,.28);
+  --bk-shadow-glow: 0 0 0 1px rgba(255,152,0,.35), 0 10px 30px rgba(255,152,0,.18);
+}
+
+html, body, button, input, select, textarea{
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Entrada suave da página */
+@keyframes bkFadeUp{
+  from{opacity:0; transform:translateY(14px)}
+  to{opacity:1; transform:none}
+}
+@keyframes bkFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes bkPop{
+  0%{transform:scale(.96);opacity:0}
+  60%{transform:scale(1.02);opacity:1}
+  100%{transform:scale(1)}
+}
+@keyframes bkShimmer{
+  0%{background-position:-200% 0}
+  100%{background-position:200% 0}
+}
+@keyframes bkPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,152,0,.45)}
+  70%{box-shadow:0 0 0 12px rgba(255,152,0,0)}
+}
+
+/* Cards do cardápio */
+.product{
+  border-radius:16px !important;
+  transition: transform .28s var(--bk-ease), box-shadow .28s var(--bk-ease), border-color .28s ease !important;
+  animation: bkFadeUp .55s var(--bk-ease) both;
+  will-change: transform;
+}
+.product:nth-child(2){animation-delay:.04s}
+.product:nth-child(3){animation-delay:.08s}
+.product:nth-child(4){animation-delay:.12s}
+.product:nth-child(5){animation-delay:.16s}
+.product:nth-child(6){animation-delay:.20s}
+.product:nth-child(n+7){animation-delay:.24s}
+@media (hover:hover){
+  .product:hover{
+    transform: translateY(-3px) !important;
+    box-shadow: var(--bk-shadow-md) !important;
+    border-color: rgba(255,152,0,.45) !important;
+  }
+}
+.product:active{transform: scale(.985) !important;}
+
+/* Botões com feedback tátil */
+button, .btn, [role="button"]{
+  transition: transform .15s var(--bk-ease), filter .2s ease, box-shadow .2s ease, background-color .2s ease !important;
+}
+button:active, .btn:active, [role="button"]:active{transform: scale(.96) !important;}
+@media (hover:hover){
+  .btn:hover, button:hover{filter:brightness(1.07);}
+}
+.btn.green, .btn.primary{
+  box-shadow: var(--bk-shadow-sm);
+}
+.btn.green:not(:disabled){animation: bkPulse 2.6s ease-out infinite;}
+
+/* Cards e painéis com cantos mais suaves */
+.cart-item, .bpb-card, .closed-card, .baruki-search-wrap{
+  border-radius:16px !important;
+  animation: bkFadeUp .45s var(--bk-ease) both;
+}
+
+/* Modais e painéis: entrada com escala */
+.modal, .modal-content, .modal-box, .sheet, .drawer, .bp-card{
+  animation: bkPop .35s var(--bk-ease) both;
+}
+.modal-overlay, .overlay, .backdrop{
+  animation: bkFadeIn .25s ease both;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Barra de busca com brilho sutil no foco */
+input[type="search"], input[type="text"], .baruki-search-wrap input{
+  transition: box-shadow .25s ease, border-color .25s ease !important;
+}
+input:focus{
+  outline:none !important;
+  box-shadow: var(--bk-shadow-glow) !important;
+}
+
+/* Skeleton/shimmer utilitário (para carregamentos) */
+.bk-shimmer{
+  background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.12) 37%, rgba(255,255,255,.04) 63%);
+  background-size: 400% 100%;
+  animation: bkShimmer 1.4s ease infinite;
+}
+
+/* Scrollbar discreta */
+*{scrollbar-width:thin; scrollbar-color: rgba(255,152,0,.5) transparent;}
+
+/* Respeitar quem prefere menos movimento */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
 </head>
 <body>
 <!-- TELA DE MANUTENÇÃO BARUKI (no início da página para aparecer imediatamente) -->
@@ -12344,6 +12460,84 @@ html body #checkout #changeMessage.troco-ok strong{font-weight:900}
     nota:function(){return atual||0;},
     limpar:function(){atual=0;pintar();}
   };
+})();
+</script>
+<style id="bk-digital-flip-css">
+.bk-digital-val{display:inline-block;perspective:420px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bk-d{display:inline-block;transform-origin:50% 60%;backface-visibility:hidden;animation:bkDigitFlip .55s cubic-bezier(.22,1,.36,1) both}
+.bk-d.bk-glow{color:var(--orange,#ff9800) !important;text-shadow:0 0 10px rgba(255,152,0,.75)}
+@keyframes bkDigitFlip{
+  0%{transform:rotateX(-90deg) translateY(-30%);opacity:0;filter:blur(2px)}
+  55%{transform:rotateX(12deg);opacity:1;filter:blur(0)}
+  100%{transform:rotateX(0);opacity:1}
+}
+</style>
+<script id="bk-digital-flip-js">
+(function(){
+  var SEL='.price,.item-total,.order-card-total,.total,.subtotal,.bpb-prices,#pizzaTotal,#twoFlavorTotal,#baruki-total-pizza-valor-destaque,.summary strong,.summary span';
+  var ultimo=new WeakMap();
+  var reduzir=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function alvo(no){
+    var el=no&&no.nodeType===3?no.parentElement:no;
+    for(var i=0;el&&i<4;i++,el=el.parentElement){
+      if(el.matches&&el.matches(SEL)&&el.children.length===0&&/\d/.test(el.textContent)) return el;
+    }
+    return null;
+  }
+
+  function piscar(el,antigo,novo){
+    if(reduzir) return;
+    var n=novo.length, m=antigo.length;
+    el.classList.add('bk-digital-val');
+    el.textContent='';
+    for(var i=0;i<n;i++){
+      var ch=novo.charAt(i);
+      var pos=m-(n-i); // alinha pela direita
+      var mudou=(pos<0)||antigo.charAt(pos)!==ch;
+      var s=document.createElement('span');
+      s.textContent=ch;
+      if(/\d/.test(ch)&&mudou){
+        s.className='bk-d bk-glow';
+        s.style.animationDelay=(i*45)+'ms';
+      } else if(/\d/.test(ch)){
+        s.style.display='inline-block';
+      }
+      el.appendChild(s);
+    }
+    setTimeout(function(){
+      el.querySelectorAll('.bk-glow').forEach(function(x){x.classList.remove('bk-glow');});
+      el.classList.remove('bk-digital-val');
+      el.textContent=novo;
+    }, 900+n*45);
+  }
+
+  function processar(el){
+    var novo=el.textContent.trim();
+    var antigo=ultimo.get(el);
+    ultimo.set(el,novo);
+    if(antigo!==undefined && antigo!==novo && /\d/.test(novo)) piscar(el,antigo,novo);
+  }
+
+  function varrer(){
+    document.querySelectorAll(SEL).forEach(function(el){
+      if(el.children.length===0 && /\d/.test(el.textContent)) ultimo.set(el,el.textContent.trim());
+    });
+  }
+
+  var obs=new MutationObserver(function(lista){
+    lista.forEach(function(m){
+      var el=alvo(m.target);
+      if(el && !el.querySelector('.bk-d')) processar(el);
+    });
+  });
+
+  function iniciar(){
+    varrer();
+    obs.observe(document.body,{childList:true,subtree:true,characterData:true});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar);
+  else iniciar();
 })();
 </script>
 </body>
