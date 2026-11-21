@@ -2226,6 +2226,45 @@ input:focus{
 </style>
 </head>
 <body>
+<!-- ABERTURA ESTÁVEL: tela de carregamento que some sozinha quando o site inteiro está pronto -->
+<style id="bk-abertura-estavel-css">
+#bkBoot{position:fixed;inset:0;z-index:2147482000;display:flex;align-items:center;justify-content:center;background:#121212;opacity:1;transition:opacity .12s ease;pointer-events:all}
+#bkBoot.dia{background:#fff7ec}
+#bkBoot.saindo{opacity:0;pointer-events:none}
+#bkBoot i{width:46px;height:46px;border-radius:50%;border:5px solid rgba(255,152,0,.25);border-top-color:#ff9800;animation:bkBootSpin .8s linear infinite}
+@keyframes bkBootSpin{to{transform:rotate(360deg)}}
+</style>
+<div id="bkBoot" aria-hidden="true"><i></i></div>
+<script id="bk-abertura-estavel-js">
+(function(){
+  var boot=document.getElementById('bkBoot'),done=false,quietT=null,loaded=false,startT=Date.now();
+  try{if(localStorage.getItem('baruki_theme_v4')==='day')boot.classList.add('dia');}catch(e){}
+  function finish(){
+    if(done)return;done=true;
+    try{mo.disconnect()}catch(e){}
+    boot.classList.add('saindo');
+    setTimeout(function(){if(boot.parentNode)boot.parentNode.removeChild(boot);},150);
+  }
+  /* Espera o site parar de mudar (sem novas alterações por 120ms) */
+  function armQuiet(){
+    clearTimeout(quietT);
+    if(!loaded)return;
+    quietT=setTimeout(finish,120);
+  }
+  var mo=new MutationObserver(function(m){
+    for(var i=0;i<m.length;i++){if(m[i].target&&boot.contains(m[i].target))continue;armQuiet();return;}
+  });
+  mo.observe(document.documentElement,{childList:true,subtree:true});
+  function onReady(){
+    loaded=true;
+    var f=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();
+    f.then(function(){armQuiet();},function(){armQuiet();});
+  }
+  if(document.readyState!=='loading')onReady();else document.addEventListener('DOMContentLoaded',onReady,{once:true});
+  /* Segurança: nunca prende o site. Mostra no máximo 1,2s após o início */
+  setTimeout(finish,1200);
+})();
+</script>
 <!-- TELA DE MANUTENÇÃO BARUKI (no início da página para aparecer imediatamente) -->
 <style id="baruki-aviso-remoto-style">
 #barukiAvisoRemoto{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;box-sizing:border-box;padding:20px;background:rgba(0,0,0,.97);overscroll-behavior:contain;text-align:center;overflow-y:auto;-webkit-overflow-scrolling:touch;}
@@ -12813,5 +12852,76 @@ html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pi
 html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="G"]){background:linear-gradient(145deg,#fff3e0,#ffcc80)!important;color:#bf360c!important;border-color:#ff6b00!important}
 html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value]):has(input:checked)::after{content:none!important;display:none!important}
 </style>
+<style id="tamanho-pg-selecionado-forte">
+/* Somente o efeito do bloco SELECIONADO (Pizza P / Pizza G). Nada de função, texto ou lógica alterado. */
+@keyframes pgGlowG{0%,100%{box-shadow:0 0 0 4px rgba(255,107,0,.55),0 0 18px 6px rgba(255,107,0,.65),0 0 38px 12px rgba(255,107,0,.35)}50%{box-shadow:0 0 0 5px rgba(255,152,0,.75),0 0 26px 10px rgba(255,107,0,.85),0 0 52px 18px rgba(255,107,0,.45)}}
+@keyframes pgGlowP{0%,100%{box-shadow:0 0 0 4px rgba(67,160,71,.55),0 0 18px 6px rgba(67,200,90,.65),0 0 38px 12px rgba(67,160,71,.35)}50%{box-shadow:0 0 0 5px rgba(102,220,110,.75),0 0 26px 10px rgba(67,200,90,.85),0 0 52px 18px rgba(67,160,71,.45)}}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="G"]):has(input:checked){
+  border-color:#ffb74d!important;
+  background:linear-gradient(145deg,rgba(255,107,0,.65),rgba(229,57,53,.25))!important;
+  color:#fff!important;transform:scale(1.05)!important;position:relative;z-index:2;
+  animation:pgGlowG 1.8s ease-in-out infinite!important}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="P"]):has(input:checked){
+  border-color:#81c784!important;
+  background:linear-gradient(145deg,rgba(67,160,71,.65),rgba(67,160,71,.2))!important;
+  color:#fff!important;transform:scale(1.05)!important;position:relative;z-index:2;
+  animation:pgGlowP 1.8s ease-in-out infinite!important}
+/* Não selecionado fica mais apagado, para o selecionado se destacar */
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:not(:has(input:checked)){opacity:.6!important;box-shadow:none!important}
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="G"]):has(input:checked){background:linear-gradient(145deg,#ffcc80,#ff9800)!important;color:#7a2600!important}
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="P"]):has(input:checked){background:linear-gradient(145deg,#a5d6a7,#66bb6a)!important;color:#0d3d12!important}
+</style>
+<style id="bk-sugestao-bebida-css">
+#cartContent .bk-bebida-sug{margin:14px 0 0;padding:14px;border-radius:18px;background:linear-gradient(145deg,rgba(255,152,0,.18),rgba(255,152,0,.05));border:2px solid #ff9800;box-shadow:0 6px 18px rgba(255,152,0,.18)}
+#cartContent .bk-bebida-sug h3{margin:0 0 4px;font-size:18px;font-weight:900;color:#ffb74d}
+#cartContent .bk-bebida-sug p{margin:0 0 12px;font-size:14px;color:#cfcfcf}
+#cartContent .bk-bebida-lista{display:flex;flex-direction:row;gap:10px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding:2px 2px 10px;margin:0 -4px;scrollbar-width:thin}
+#cartContent .bk-bebida-card{flex:0 0 150px;scroll-snap-align:start;display:flex;flex-direction:column;justify-content:space-between;gap:8px;padding:10px;border-radius:14px;background:#161616;border:1px solid #3a3a3a;color:#fff}
+#cartContent .bk-bebida-card b{font-size:14px;line-height:1.25;font-weight:800}
+#cartContent .bk-bebida-card span{font-size:15px;font-weight:900;color:#ffb74d}
+#cartContent .bk-bebida-card button{border:0;border-radius:12px;padding:10px;font-size:14px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ff9800,#ff6b00);cursor:pointer}
+#cartContent .bk-bebida-card button:active{transform:scale(.97)}
+body.day-theme #cartContent .bk-bebida-sug{background:#fff3e0}
+body.day-theme #cartContent .bk-bebida-sug h3{color:#bf360c}
+body.day-theme #cartContent .bk-bebida-sug p{color:#5a4630}
+body.day-theme #cartContent .bk-bebida-card{background:#fff;border-color:#ead7bd;color:#3d2400}
+body.day-theme #cartContent .bk-bebida-card span{color:#bf360c}
+</style>
+<script id="bk-sugestao-bebida-js">
+(function(){
+  var IDS=['bebidas_6','bebidas_20','bebidas_18','bebidas_13'];
+  function isDrink(i){var p=(i&&i.product)||{};return p.cat==='bebidas'||String(p.id||'').indexOf('bebidas')===0;}
+  function sugestao(){
+    if(!Array.isArray(cart)||!cart.length)return '';
+    if(!cart.some(function(i){return !isDrink(i);}))return '';
+    var ordem={'Refrigerante':0,'Águas':1,'Cerveja':2};
+    var list=products.filter(function(p){return p.cat==='bebidas';}).map(function(p,i){return {p:p,i:i};}).sort(function(a,b){
+      var ga=ordem[a.p.group]!=null?ordem[a.p.group]:9,gb=ordem[b.p.group]!=null?ordem[b.p.group]:9;
+      return ga-gb||a.i-b.i;}).map(function(x){return x.p;});
+    if(!list.length)return '';
+    return '<div class="bk-bebida-sug"><h3>🥤 '+(cart.some(isDrink)?'Quer mais alguma bebida?':'Que tal uma bebida?')+'</h3><p>Combine seu lanche com uma bebida gelada.</p><div class="bk-bebida-lista">'+
+      list.map(function(p){
+        return '<div class="bk-bebida-card"><b>'+safeText(p.name)+'</b><span>'+money(p.price)+'</span><button type="button" onclick="bkAddBebida(\''+p.id+'\')">+ ADICIONAR</button></div>';
+      }).join('')+'</div></div>';
+  }
+  window.bkAddBebida=function(id){
+    var p=products.find(function(x){return x.id===id;});if(!p)return;
+    cart.push({key:makeKey(p.id,[],''),product:{id:p.id,name:p.name,price:Number(p.price)||0,cat:p.cat,group:p.group||''},additions:[],removals:[],note:'',qty:1,unitPrice:Number(p.price)||0});
+    cart=mergeCartItems(cart);saveCart();updateBadge();
+    toast('Bebida adicionada 🥤');
+    renderCart();
+  };
+  var original=renderCart;
+  renderCart=function(){
+    original.apply(this,arguments);
+    try{
+      var box=document.getElementById('cartContent');if(!box)return;
+      var html=sugestao();if(!html)return;
+      var sum=box.querySelector('.summary');if(!sum)return;
+      sum.insertAdjacentHTML('beforebegin',html);
+    }catch(e){}
+  };
+})();
+</script>
 </body>
 </html>
