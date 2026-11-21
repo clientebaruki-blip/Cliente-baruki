@@ -5897,13 +5897,15 @@ function startPrepTimer(){
   if(!box||!timeEl)return;
   if(!isPrepTimerEnabled()){box.classList.remove('show','done');return;}
   if(prepTimerInterval){clearInterval(prepTimerInterval);prepTimerInterval=null;}
-  const end=Number(localStorage.getItem(PREP_TIMER_KEY)||0);
+  let end=0;
+  try{end=Number(localStorage.getItem(PREP_TIMER_KEY)||0);}catch(e){end=Number(window.__barukiPrepEndMem||0);}
   if(!Number.isFinite(end)||end<=0){box.classList.remove('show','done');return;}
   const tick=()=>{
     const remaining=Math.max(0,end-Date.now());
     if(remaining<=0){
       clearInterval(prepTimerInterval);prepTimerInterval=null;
-      localStorage.removeItem(PREP_TIMER_KEY);
+      try{localStorage.removeItem(PREP_TIMER_KEY);}catch(e){}
+      window.__barukiPrepEndMem=0;
       box.classList.remove('show','done');timeEl.textContent='00:00';if(subEl)subEl.textContent='tempo estimado';return;
     }
     const totalSeconds=Math.ceil(remaining/1000),min=Math.floor(totalSeconds/60),sec=totalSeconds%60;
@@ -5913,7 +5915,7 @@ function startPrepTimer(){
   };
   tick();prepTimerInterval=setInterval(tick,250);
 }
-function activatePrepTimer(){if(!isPrepTimerEnabled())return;localStorage.setItem(PREP_TIMER_KEY,String(Date.now()+((window.__barukiPrepMin||45)*60*1000)));startPrepTimer();}
+function activatePrepTimer(){if(!isPrepTimerEnabled())return;const _end=Date.now()+((window.__barukiPrepMin||45)*60*1000);window.__barukiPrepEndMem=_end;try{localStorage.setItem(PREP_TIMER_KEY,String(_end));}catch(e){}startPrepTimer();}
 refreshPrepTimerToggle();
 
 /* =========================
@@ -6618,7 +6620,8 @@ img, video, canvas, svg{
 
   /* Som de clique — ativar/desativar em Configurações */
   function updateSoundUI(){
-    const on=localStorage.getItem(V2.soundKey)!=='off';
+    let on=true;
+    try{on=localStorage.getItem(V2.soundKey)!=='off';}catch(e){on=!V2._soundOffMem;}
     const btn=V2.get('soundToggle');
     const icon=V2.get('soundToggleIcon');
     const title=V2.get('soundToggleTitle');
@@ -6635,8 +6638,10 @@ img, video, canvas, svg{
     updateSoundUI();
     const btn=V2.get('soundToggle');
     btn?.addEventListener('click',()=>{
-      const off=localStorage.getItem(V2.soundKey)==='off';
-      localStorage.setItem(V2.soundKey,off?'on':'off');
+      let off=false;
+      try{off=localStorage.getItem(V2.soundKey)==='off';}catch(e){off=!!V2._soundOffMem;}
+      V2._soundOffMem=!off;
+      try{localStorage.setItem(V2.soundKey,off?'on':'off');}catch(e){}
       updateSoundUI();
       btn.classList.remove('click-pop');
       void btn.offsetWidth;
@@ -12783,6 +12788,30 @@ body.day-theme #detailContent .pizza2-size-box{background:#fff7ec!important;bord
 body.day-theme #detailContent .pizza2-size-box>h3{color:#3d2400!important}
 body.day-theme #detailContent .pizza2-size-box label.pizza2-radio{background:#fff!important;border-color:#ead7bd!important;color:#3d2400!important}
 body.day-theme #detailContent .pizza2-size-box label.pizza2-radio:has(input:checked){background:linear-gradient(120deg,#fff3e0,#ffe6c2)!important;border-color:#ff9800!important;color:#3d2400!important}
+</style>
+<style id="pizza-p-g-cores-vida">
+/* Somente os blocos Pizza P e Pizza G da tela Monte 2 sabores */
+html body .pizza2-page .pizza2-size-box label.pizza2-radio:has(input[value="P"]){border:2px solid #43a047!important;background:linear-gradient(145deg,rgba(67,160,71,.28),rgba(67,160,71,.06))!important;color:#e8f5e9!important;box-shadow:0 6px 16px rgba(67,160,71,.22)!important}
+html body .pizza2-page .pizza2-size-box label.pizza2-radio:has(input[value="G"]){border:2px solid #ff6b00!important;background:linear-gradient(145deg,rgba(255,107,0,.30),rgba(229,57,53,.08))!important;color:#fff3e0!important;box-shadow:0 6px 16px rgba(255,107,0,.25)!important}
+html body .pizza2-page .pizza2-size-box label.pizza2-radio:has(input[value="P"]) input[type="radio"]{accent-color:#43a047!important}
+html body .pizza2-page .pizza2-size-box label.pizza2-radio:has(input[value="G"]) input[type="radio"]{accent-color:#ff6b00!important}
+html body .pizza2-page .pizza2-size-box label.pizza2-radio:has(input[value="P"]):not(:has(input:checked)){opacity:.92}
+html body .pizza2-page .pizza2-size-box label.pizza2-radio:has(input[value="G"]):not(:has(input:checked)){opacity:.92}
+html body .pizza2-page .pizza2-size-box label.pizza2-radio:has(input:checked){transform:scale(1.02)!important;transition:.2s!important}
+body.day-theme .pizza2-page .pizza2-size-box label.pizza2-radio:has(input[value="P"]){background:linear-gradient(145deg,#e8f5e9,#c8e6c9)!important;color:#1b5e20!important;border-color:#43a047!important}
+body.day-theme .pizza2-page .pizza2-size-box label.pizza2-radio:has(input[value="G"]){background:linear-gradient(145deg,#fff3e0,#ffcc80)!important;color:#bf360c!important;border-color:#ff6b00!important}
+</style>
+<style id="pizza-tamanho-p-g-vida">
+/* Somente os botões Pizza P e Pizza G (bloco Tamanho da tela Monte 2 sabores) */
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="P"]){border:2px solid #43a047!important;background:linear-gradient(145deg,rgba(67,160,71,.30),rgba(67,160,71,.07))!important;color:#e8f5e9!important;box-shadow:0 6px 16px rgba(67,160,71,.25)!important}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="G"]){border:2px solid #ff6b00!important;background:linear-gradient(145deg,rgba(255,107,0,.32),rgba(229,57,53,.09))!important;color:#fff3e0!important;box-shadow:0 6px 16px rgba(255,107,0,.28)!important}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="P"]) input[type="radio"]{accent-color:#43a047!important}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="G"]) input[type="radio"]{accent-color:#ff6b00!important}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="P"]):has(input:checked){box-shadow:0 0 0 3px rgba(67,160,71,.35),0 6px 16px rgba(67,160,71,.3)!important;transform:scale(1.02)!important}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="G"]):has(input:checked){box-shadow:0 0 0 3px rgba(255,107,0,.35),0 6px 16px rgba(255,107,0,.3)!important;transform:scale(1.02)!important}
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="P"]){background:linear-gradient(145deg,#e8f5e9,#c8e6c9)!important;color:#1b5e20!important;border-color:#43a047!important}
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value="G"]){background:linear-gradient(145deg,#fff3e0,#ffcc80)!important;color:#bf360c!important;border-color:#ff6b00!important}
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input[value]):has(input:checked)::after{content:none!important;display:none!important}
 </style>
 </body>
 </html>
