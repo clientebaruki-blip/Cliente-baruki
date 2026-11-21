@@ -2,13 +2,11 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ff9800">
 <meta name="color-scheme" content="light dark">
 <link rel="preconnect" href="https://www.socialcreator.com">
 <link rel="preconnect" href="https://www.socialcreator.com" crossorigin>
-<link rel="preload" as="image" href="https://www.socialcreator.com/srv/imgs/seccs/334897_ico.png?ts=1793557654" fetchpriority="high">
-<link rel="preload" as="image" href="https://www.socialcreator.com/srv/imgs/seccs/334898_ico.png?ts=1793557654">
 <link rel="preload" as="image" href="https://www.socialcreator.com/srv/imgs/seccs/335028_ico.png">
 <link rel="preload" as="image" href="https://www.socialcreator.com/srv/imgs/seccs/335027_ico.png">
 <link rel="preload" as="image" href="https://www.socialcreator.com/srv/imgs/seccs/335026_ico.png">
@@ -7191,10 +7189,13 @@ function fecharConfiguracoesBaruki(){
         const im=new Image();
         im.decoding='async';
         if(i===0&&'fetchPriority' in im)im.fetchPriority='high';
+        /* URL sempre nova: nunca mostra a cópia antiga guardada no cache */
+        let novaUrl;
+        try{const u=new URL(url);const st=Date.now();u.searchParams.set('ts',String(st));u.searchParams.set('_baruki_refresh',st+'_'+Math.random().toString(36).slice(2));novaUrl=u.toString();}catch(e){novaUrl=url+(url.includes('?')?'&':'?')+'ts='+Date.now();}
         im.onload=function(){
           const fin=function(){
             if(!encerrou){
-              banners.push({url:url,hash:'rapido',src:url,objectUrl:null});
+              banners.push({url:url,hash:'rapido',src:novaUrl,objectUrl:null});
               banners.sort(function(a,b){return lista.indexOf(a.url)-lista.indexOf(b.url);});
               build();
               if(window.BarukiPrioridade)window.BarukiPrioridade.bannersProntos();
@@ -7204,7 +7205,7 @@ function fecharConfiguracoesBaruki(){
           if(im.decode){im.decode().then(fin,fin);}else fin();
         };
         im.onerror=chegou;
-        im.src=url;
+        im.src=novaUrl;
       });
       if(!pend){clearTimeout(timer);fim();}
     });
@@ -7391,7 +7392,7 @@ function fecharConfiguracoesBaruki(){
       // 1ª CARGA: mostra o primeiro banner assim que a imagem chegar.
       if(!primeiraCargaFeita&&!banners.length){
         await carregarRapido(listaUrls);
-        ultimaLista=chave;ultimaOff=offKey;ultimaBaixa=Date.now()-45000; /* 1ª verificação completa em ~15s, depois que a página assentou */
+        ultimaLista=chave;ultimaOff=offKey;ultimaBaixa=Date.now()-60000; /* 1ª verificação completa em ~15s, depois que a página assentou */
       }
       // Já baixou há menos de 60s e nada mudou: não baixa as 8 imagens de novo (antes era a cada 5s).
       const reaproveitar=banners.length>0&&chave===ultimaLista&&offKey===ultimaOff&&(Date.now()-ultimaBaixa)<60000;
@@ -12921,6 +12922,59 @@ body.day-theme #cartContent .bk-bebida-card span{color:#bf360c}
       sum.insertAdjacentHTML('beforebegin',html);
     }catch(e){}
   };
+})();
+</script>
+<style id="bk-app-premium-css">
+/* ===== 1) LAYOUT ADAPTÁVEL A DIFERENTES CELULARES ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:hidden}
+body{overflow-x:hidden;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+img,video{max-width:100%}
+html body .header{padding-top:calc(14px + env(safe-area-inset-top))}
+html body .product h3{font-size:clamp(14px,4.4vw,18px)}
+html body .product .price{font-size:clamp(16px,5vw,20px)}
+@media(max-width:360px){
+  html body .container{padding-left:10px;padding-right:10px}
+  html body .grid{gap:9px}
+  html body .product{padding:10px}
+  html body .cat{padding:8px 11px;font-size:13px}
+}
+@media(min-width:700px){html body .grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:1000px){html body .container{max-width:1000px}}
+
+/* ===== 2) VISUAL DE APLICATIVO PREMIUM ===== */
+html body:not(.day-theme){background:radial-gradient(120% 60% at 50% 0%,#1d1209 0%,#121212 55%)!important;background-attachment:fixed}
+html body:not(.day-theme) .header{background:linear-gradient(180deg,rgba(24,18,13,.96),rgba(18,18,18,.92))!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,152,0,.28)!important;box-shadow:0 6px 22px rgba(0,0,0,.45)}
+html body:not(.day-theme) .bottom{background:rgba(22,22,22,.9)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 -8px 24px rgba(0,0,0,.45)}
+html body .cat.active{background:linear-gradient(135deg,#ffa726,#ff6b00)!important;box-shadow:0 4px 14px rgba(255,107,0,.4)}
+html body .product .add,html body .btn:not(.secondary):not(.green){background:linear-gradient(135deg,#ffa726,#ff6b00);box-shadow:0 6px 16px rgba(255,107,0,.32);letter-spacing:.2px}
+html body .btn,html body .add,html body .cat{transition:transform .15s ease,box-shadow .15s ease}
+html body .btn:active,html body .add:active{transform:scale(.97)}
+
+/* ===== 3) EFEITO 3D DISCRETO NOS CARDS ===== */
+html body .grid{perspective:900px}
+html body .product{transform-style:preserve-3d;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;will-change:transform;
+  box-shadow:0 1px 0 rgba(255,255,255,.08) inset,0 10px 20px -6px rgba(0,0,0,.55),0 2px 4px rgba(0,0,0,.35)}
+html body .product:hover{transform:translateY(-3px) rotateX(2.5deg);box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 18px 30px -8px rgba(0,0,0,.6),0 0 0 1px rgba(255,152,0,.25)}
+html body .product:active{transform:perspective(700px) rotateX(3deg) scale(.985);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 5px 12px -4px rgba(0,0,0,.6)}
+html body.day-theme .product{box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 10px 20px -8px rgba(120,80,20,.28),0 2px 4px rgba(120,80,20,.12)}
+
+/* ===== 4) EFEITO DE ENTRADA DOS BANNERS ===== */
+@keyframes bkBannerIn{0%{opacity:0;transform:translateY(18px) scale(.96)}100%{opacity:1;transform:none}}
+html.bk-pre .baruki-banner-wrap{opacity:0}
+html.bk-entrou .baruki-banner-wrap{animation:bkBannerIn .65s cubic-bezier(.2,.8,.2,1) both}
+@media(prefers-reduced-motion:reduce){html.bk-pre .baruki-banner-wrap{opacity:1}html.bk-entrou .baruki-banner-wrap{animation:none}}
+
+</style>
+<script id="bk-app-premium-js">
+(function(){
+  var H=document.documentElement;
+  /* Banners: entrada depois que a tela de carregamento sai */
+  H.classList.add('bk-pre');
+  var entrou=false;
+  function entrar(){if(entrou)return;entrou=true;H.classList.remove('bk-pre');H.classList.add('bk-entrou');setTimeout(function(){H.classList.remove('bk-entrou');},900);}
+  (function esperar(){var b=document.getElementById('bkBoot');if(!b||b.classList.contains('saindo'))entrar();else setTimeout(esperar,60);})();
+  setTimeout(entrar,2500);
+
 })();
 </script>
 </body>
