@@ -3127,17 +3127,17 @@ background:#fff!important;border:1px solid #ead6a3;box-shadow:none;color:#2b2b2b
 
 <nav class="bottom">
   <button id="nMenu" class="nav active" onclick="go('menu')">
-    <span class="nav-icon">☰</span><span>Cardápio</span>
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></span><span>Cardápio</span>
   </button>
   <button id="nOrders" class="nav" onclick="go('orders')">
-    <span class="nav-icon">📋</span><span>Meus pedidos</span>
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11h6M9 15h4"/></svg></span><span>Meus pedidos</span>
   </button>
   <button id="nCart" class="nav" onclick="go('cart')">
-    <span class="nav-icon cart-icon">🛒</span><span>Carrinho</span>
+    <span class="nav-icon cart-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 11.2a1 1 0 0 0 1 .8h9.7a1 1 0 0 0 1-.8L21 7H6"/></svg></span><span>Carrinho</span>
     <span id="navBadge" class="nav-badge">0</span>
   </button>
   <button id="settingsFab" class="nav settings-fab" type="button" aria-label="Abrir configurações" title="Configurações">
-    <span class="nav-icon">⚙️</span><span>Configurações</span>
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span>Configurações</span>
   </button>
 </nav>
 
@@ -12965,6 +12965,23 @@ html.bk-entrou .baruki-banner-wrap{animation:bkBannerIn .65s cubic-bezier(.2,.8,
 @media(prefers-reduced-motion:reduce){html.bk-pre .baruki-banner-wrap{opacity:1}html.bk-entrou .baruki-banner-wrap{animation:none}}
 
 </style>
+<style id="bk-nav-pro">
+/* Barra inferior: visual profissional (somente nav.bottom) */
+html body nav.bottom{background:rgba(14,14,14,.94)!important;border-top:1px solid rgba(255,255,255,.08)!important;box-shadow:0 -6px 20px rgba(0,0,0,.35)!important;padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important;gap:6px!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+html body nav.bottom .nav{height:60px!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:14px!important;color:#8e8e8e!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;transition:color .2s,background .2s}
+html body nav.bottom .nav .nav-icon{display:flex;align-items:center;justify-content:center;height:24px;font-size:0!important;line-height:0!important}
+html body nav.bottom .nav .nav-icon svg{width:22px;height:22px}
+html body nav.bottom #nMenu .nav-icon:before,html body nav.bottom #nMenu .nav-icon:after{content:none!important;display:none!important}
+html body nav.bottom .nav > span:not(.nav-icon):not(.nav-badge){font-size:11px!important;font-weight:600!important;letter-spacing:.1px;color:inherit!important;-webkit-text-fill-color:currentColor!important;text-shadow:none!important}
+html body nav.bottom .nav.active{background:rgba(255,152,0,.12)!important;color:#ff9800!important;border:0!important;box-shadow:none!important}
+</style>
+<style id="bk-fundo-preto">
+/* Fundo preto: categorias e barra inferior (Cardápio, Meus pedidos, Carrinho, Configurações). Só no tema escuro. */
+html body:not(.day-theme) #categories .cat{background:#000!important}
+html body:not(.day-theme) nav.bottom{background:#000!important}
+html body:not(.day-theme) nav.bottom .nav{background:#000!important}
+html body:not(.day-theme) nav.bottom .nav.active{background:#000!important}
+</style>
 <script id="bk-app-premium-js">
 (function(){
   var H=document.documentElement;
@@ -12977,5 +12994,16 @@ html.bk-entrou .baruki-banner-wrap{animation:bkBannerIn .65s cubic-bezier(.2,.8,
 
 })();
 </script>
+<style id="baruki-categorias-dentro-amarelo">
+/* Barra de categorias dentro do mesmo quadro amarelo da busca "Encontre seu pedido" */
+html body #categories{border:2px solid #D4AF37 !important;box-shadow:0 0 0 1px rgba(255,215,0,.25),0 0 12px rgba(212,175,55,.35) !important;border-radius:18px !important;background:#0b0b0b !important;padding:12px 10px 14px !important;margin:0 0 14px !important;box-sizing:border-box !important;width:100% !important;}
+/* Os cards de categoria perdem a borda dourada individual */
+html body #categories .cat{border:1px solid #292929 !important;box-shadow:0 3px 7px rgba(0,0,0,.35) !important;}
+html body #categories .cat.active{background:linear-gradient(180deg,#ffb74d 0%,#ff9800 100%) !important;border:1px solid #ff9800 !important;box-shadow:0 5px 14px rgba(255,152,0,.35) !important;color:#fff !important;}
+html body #categories .cat.active .category-label{color:#fff !important;}
+/* Sem contorno laranja em volta do ícone da categoria selecionada */
+html body #categories .cat .category-image,
+html body #categories .cat.active .category-image{outline:none !important;border:none !important;}
+</style>
 </body>
 </html>
