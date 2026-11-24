@@ -4889,15 +4889,14 @@ function buildOrderMessage(order){
     const q=Number(item.qty)||1, cat=orderCategoryLabel(getOrderCategory(item));
     if(item.pizzaDoisSabores){
       message+='• *PIZZA + 2 SABORES* x'+q+' — '+money((Number(item.unitPrice)||0)*q)+'\n';
-      if(item.sabor1)message+='  🍕 '+cleanOrderName(item.sabor1)+'\n';
-      if(item.sabor2)message+='  🍕 '+cleanOrderName(item.sabor2)+'\n';
+      if(item.sabor1)message+='  '+barukiSemEmoji(cleanOrderName(item.sabor1))+'\n';
+      if(item.sabor2)message+='  '+barukiSemEmoji(cleanOrderName(item.sabor2))+'\n';
     }else{
-      const icon=orderCategoryIcon(item);
       let nome=cleanOrderName(item.name||item.product?.name||'Produto');
       if(String(getOrderCategory(item)).toLowerCase()==='pizzas'){
         nome=nome.replace(/^PIZZA\s*/iu,'').replace(/^🍕\s*/u,'').trim();
       }
-      message+='• *'+cat+(icon?' '+icon:'')+' + '+nome+'* x'+q+' — '+money((Number(item.unitPrice)||0)*q)+'\n';
+      message+='• *'+iconeCategoriaWhats(item)+cat+' + '+barukiSemEmoji(nome)+'* x'+q+' — '+money((Number(item.unitPrice)||0)*q)+'\n';
     }
     if(item.additions?.length)message+='  ↳ Adicionais: '+item.additions.map(a=>cleanOrderName(a.name)).join(', ')+'\n';
     if(item.removals?.length)message+='  ↳ Removidos: '+item.removals.map(cleanOrderName).join(', ')+'\n';
@@ -6037,6 +6036,15 @@ function orderDisplayTitle(item){
   }
   return orderCategoryLabel(c)+(icon?' '+icon:'')+' + '+raw;
 }
+// Remove emojis de títulos de itens da mensagem do WhatsApp (mantém ◆, •, ★ e o 🍕 do tamanho).
+function iconeCategoriaWhats(item){
+  const c=getOrderCategory(item);
+  if(c==='pizzas') return orderCategoryIcon(item);
+  return ({lanches:'🍔',porcoes:'🍟',pastel:'🥐',bebidas:'🍹',cachorro:'🌭',promocao:'🔥'})[c]||'';
+}
+function barukiSemEmoji(texto){
+  return String(texto||'').replace(/\p{Extended_Pictographic}|\u200d|\ufe0f/gu,'').replace(/\s{2,}/g,' ').trim();
+}
 function sendWhatsApp(){
   if(!cart.length){toast('O carrinho está vazio.');return;}
 
@@ -6065,23 +6073,23 @@ function sendWhatsApp(){
   let message='';
   if(document.getElementById('includeGoodNight')?.checked) message+='Boa noite!\n\n';
   message+='◆ *PEDIDO LANCHONETE BARUKI* ◆\n\n';
-  if(name) message+='◆ *Cliente:* '+name+'\n';
+  if(name) message+='◆ *👤Cliente:* '+name+'\n';
 
   if(selectedDelivery.name==='Comer no local'){
-    message+='◆ *Comer no local*\n';
+    message+='◆ *🏬Comer no local*\n';
   }else if(selectedDelivery.name==='Balcão'){
     const pickupTime=document.getElementById('pickupTime')?.value||'';
     if(!pickupTime){toast('Selecione o horário para retirada.');return;}
     if(!(new Date().getDay()>=2 && new Date().getDay()<=6)){toast('Retirada disponível somente de terça a sábado.');return;}
-    message+='◆ *Retirada no balcão*\n';
-    message+='◆ *Horário para retirada:* '+pickupTime+'\n';
+    message+='◆ *🛍️Retirada no balcão*\n';
+    message+='◆ *⏰Horário para retirada:* '+pickupTime+'\n';
   }else{
-    message+='◆ *Entrega:* '+selectedDelivery.name+' ('+money(selectedDelivery.price)+')\n';
+    message+='◆ *🛵Entrega:* '+selectedDelivery.name+' ('+money(selectedDelivery.price)+')\n';
     message+='◆ *Endereço:* '+address+'\n';
     message+='◆ *Número:* '+number+'\n';
   }
 
-  message+='◆ *Pagamento:* '+selectedPayment+'\n';
+  message+='◆ *💳Pagamento:* '+selectedPayment+'\n';
 
   if(selectedPayment==='PIX'){
     message+='◆ *IMPORTANTE:* Enviar o comprovante do PIX após o pedido para dar início ao pedido.\n';
@@ -6109,7 +6117,7 @@ function sendWhatsApp(){
     if(!clean) return '';
     const group=productInfo?.group || '';
     const icon=group==='Especiais' ? '⭐' : group==='Pizza Doce' ? '🍓' : '🍕';
-    return 'PIZZA '+icon+' '+clean;
+    return 'PIZZA '+clean;
   };
 
   cart.forEach(item=>{
@@ -6120,25 +6128,25 @@ function sendWhatsApp(){
     if(item.pizzaDoisSabores){
       const p1=getPizzaInfo(item.sabor1||item.product?.sabor1);
       const p2=getPizzaInfo(item.sabor2||item.product?.sabor2);
-      message+='• '+qtd+'x *PIZZA 🍕 + 2 SABORES*\n';
+      message+='• '+qtd+'x *🍕PIZZA + 2 SABORES*\n';
       const linha1=pizzaWhatsAppLine(item.sabor1||item.product?.sabor1,p1);
       const linha2=pizzaWhatsAppLine(item.sabor2||item.product?.sabor2,p2);
       if(linha1) message+='   '+linha1+'\n';
       if(linha2) message+='   '+linha2+'\n';
-      const tam2=String(item.key||'').match(/TAMANHO:([PG])/i);if(tam2) message+='   🍕 *Tamanho: Pizza '+tam2[1].toUpperCase()+'*\n';
+      const tam2=String(item.key||'').match(/TAMANHO:([PG])/i);if(tam2) message+='    *Tamanho: Pizza '+tam2[1].toUpperCase()+'*\n';
     }else{
       const nomeOriginal=String(item.product?.name||produtoBase?.name||'Produto').replace(/[\r\n]/g,' ').trim();
-      message+='• '+qtd+'x *'+orderDisplayTitle({...item,name:nomeOriginal})+'*\n';
+      message+='• '+qtd+'x *'+iconeCategoriaWhats(item)+barukiSemEmoji(orderDisplayTitle({...item,name:nomeOriginal}))+'*\n';
       // Informa no WhatsApp o tamanho escolhido para pizzas P/G.
       if(isPizza){
         const tamanhoMatch=String(item.key||'').match(/TAMANHO:([PG])(?:\||$)/i);
         const tamanho=tamanhoMatch?.[1]?.toUpperCase();
-        if(tamanho) message+='   🍕 *Tamanho: Pizza '+tamanho+'*\n';
+        if(tamanho) message+='    *Tamanho: Pizza '+tamanho+'*\n';
       }
       if(item.product?.flavor && String(item.product.flavor).trim() && String(item.product.flavor).trim()!==nomeOriginal){
-        message+='   🍕 Sabor: '+String(item.product.flavor).replace(/\*/g,'').trim()+'\n';
+        message+='   Sabor: '+String(item.product.flavor).replace(/\*/g,'').trim()+'\n';
       }else if(item.product?.sabor && String(item.product.sabor).trim() && String(item.product.sabor).trim()!==nomeOriginal){
-        message+='   🍕 Sabor: '+String(item.product.sabor).replace(/\*/g,'').trim()+'\n';
+        message+='   Sabor: '+String(item.product.sabor).replace(/\*/g,'').trim()+'\n';
       }
     }
 
