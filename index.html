@@ -2222,6 +2222,70 @@ input:focus{
   }
 }
 </style>
+<style id="baruki-status-cedo">
+/* Cabeçalho já com o tamanho final desde a 1ª pintura (antes, o status aparecia grande no meio da tela por alguns instantes). */
+
+/* Cabeçalho: logo à esquerda; à direita, caixa com horário + status (LOJA FECHADA/ABERTA). */
+html body .header{justify-content:space-between!important;gap:8px!important;padding:8px 10px 6px!important;min-height:0!important}
+html body .header .brand{flex:0 0 auto!important;max-width:none!important;min-width:0!important;font-size:15px!important;line-height:.95!important;white-space:nowrap!important}
+html body .header .brand span{font-size:1.3em!important}
+html body .header .status{
+  position:relative!important;display:flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:flex-end!important;flex-wrap:nowrap!important;
+  width:max-content!important;max-width:none!important;min-width:0!important;
+  flex:0 0 auto!important;margin:0 0 0 auto!important;padding:7px 9px!important;gap:9px!important;
+  border-radius:14px!important;text-align:left!important;
+}
+html body .header .store-hours.baruki-hours-esq{
+  position:static!important;display:block!important;flex:0 0 auto!important;width:auto!important;
+  margin:0!important;padding:0 11px 0 2px!important;border-right:1px solid rgba(255,255,255,.22)!important;
+  font-size:10.5px!important;font-weight:800!important;line-height:1.25!important;letter-spacing:.2px!important;
+  color:#fff!important;text-align:left!important;white-space:nowrap!important;opacity:1!important;visibility:visible!important;
+}
+html body .header .status-line{flex:0 0 auto!important;width:auto!important;margin:0!important;justify-content:flex-end!important;gap:9px!important;min-width:0!important}
+html body .header .status-line .dot{width:13px!important;height:13px!important;flex:0 0 auto!important}
+html body .header .status-line #statusText{font-size:14px!important;padding:7px 12px!important;white-space:nowrap!important;letter-spacing:.2px!important}
+@media(max-width:420px){
+  html body .header{padding:8px 8px 6px!important;gap:6px!important}
+  html body .header .brand{font-size:14px!important}
+  html body .header .status{padding:6px 5px!important;gap:6px!important}
+  html body .header .store-hours.baruki-hours-esq{font-size:10px!important;padding:0 6px 0 2px!important}
+  html body .header .status-line{gap:7px!important}
+  html body .header .status-line .dot{width:11px!important;height:11px!important}
+  html body .header .status-line #statusText{font-size:13px!important;padding:5px 7px!important}
+}
+
+/* Bolinha redonda e do mesmo tamanho nos dois estados. Loja aberta: mesmo pulso e mesma onda da loja fechada, na cor verde. */
+html body .header .status-line #statusDot{
+  display:inline-block!important;position:relative!important;
+  width:13px!important;height:13px!important;min-width:13px!important;max-width:13px!important;
+  flex:0 0 13px!important;margin:0!important;border-radius:50%!important;aspect-ratio:1/1!important;
+}
+html body .header .status-line #statusDot:not(.closed){
+  background:var(--green,#00c853)!important;color:var(--green,#00c853)!important;
+  box-shadow:0 0 9px var(--green,#00c853)!important;
+  animation:barukiOpenDotPulse 2.8s ease-in-out infinite!important;
+}
+html body .header .status-line #statusDot:not(.closed)::before{
+  content:""!important;display:block!important;position:absolute!important;inset:-5px!important;
+  border-radius:50%!important;border:2px solid currentColor!important;opacity:.7;pointer-events:none;
+  animation:barukiOpenDotWave 2.8s ease-out infinite!important;
+}
+html body .header .status-line #statusDot:not(.closed)::after{display:none!important}
+@keyframes barukiOpenDotPulse{
+  0%,100%{transform:scale(1);opacity:.9;box-shadow:0 0 9px var(--green,#00c853)}
+  50%{transform:scale(1.22);opacity:1;box-shadow:0 0 18px var(--green,#00c853)}
+}
+@keyframes barukiOpenDotWave{
+  0%{transform:scale(.7);opacity:.7}
+  75%,100%{transform:scale(2.8);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){html body .header .status-line #statusDot:not(.closed),html body .header .status-line #statusDot:not(.closed)::before{animation:none!important}}
+/* Enquanto a loja não foi verificada, o status fica oculto (não mostra "VERIFICANDO..."). Libera sozinho em 4s se algo falhar. */
+html body .header .status.status-pending{visibility:hidden!important;animation:statusCedoRevelar 0s linear 4s forwards!important}
+html body .header .status.status-pending *{visibility:hidden!important}
+@keyframes statusCedoRevelar{to{visibility:visible}}
+</style>
 </head>
 <body>
 <!-- ABERTURA ESTÁVEL: tela de carregamento que some sozinha quando o site inteiro está pronto -->
@@ -2640,7 +2704,8 @@ html.ctl-mbiblica-off #mensagemBiblicaDiaria{display:none!important}
 <header class="header">
   <div class="brand">LANCHONETE <span>BARUKI</span></div>
   <div class="sub"><span class="order-message"><span class="order-pulse">📲</span> <span class="order-line">FAÇA SEU PEDIDO COM <strong>RAPIDEZ!</strong></span><span class="order-line order-whatsapp">Envie diretamente para o <strong>WhatsApp</strong> <span class="order-pulse">💬</span></span></span></div>
-  <div class="status" aria-live="polite">
+  <div class="status status-pending" aria-live="polite">
+  <div class="store-hours baruki-hours-esq">TERÇA A SÁB<br>18:00 às 22:30</div>
   <div class="status-line"><span id="statusDot" class="dot"></span><span id="statusText">VERIFICANDO...</span></div>
 </div>
 </header>
@@ -2667,7 +2732,7 @@ html.ctl-mbiblica-off #mensagemBiblicaDiaria{display:none!important}
 <div id="onlineDiscreto">
   <button id="onlineDiscretoBtn" type="button" aria-label="." onclick="document.getElementById('onlineDiscreto').classList.toggle('aberto')">&#9660;</button>
   <div id="onlineDiscretoBox">
-<script id="_waubl2">var _wau = _wau || []; _wau.push(["dynamic", "fm0z84rdlg", "bl2", "c4302bffffff", "small"]);</script><script async src="//waust.at/d.js"></script>
+<script id="_waubl2">var _wau = _wau || []; _wau.push(["dynamic", "fm0z84rdlg", "bl2", "c4302bffffff", "small"]);</script><script async src="https://waust.at/d.js"></script>
   </div>
 </div>
 
@@ -5148,6 +5213,8 @@ setInterval(updateStatus,30000);
 
 function updateStatus(){
   const open=isOpen();
+  const boxStatus=document.querySelector('.header .status');
+  if(boxStatus) boxStatus.classList.remove('status-pending');
   const dot=document.getElementById('statusDot');
   if(dot) dot.classList.toggle('closed',!open);
   const statusText=document.getElementById('statusText');
@@ -5615,7 +5682,7 @@ function showPizzaTwoFlavors(){
  const cats='<option value="">Escolha uma categoria</option>'+['Pizzas','Especiais','Pizza Doce'].map(g=>'<option value="'+safeText(g)+'">'+pizzaIconForGroup(g)+' '+({'Pizzas':'PIZZA SALGADA','Especiais':'PIZZA ESPECIAIS','Pizza Doce':'PIZZA DOCE'}[g]||safeText(g).toUpperCase())+'</option>').join('');
  currentProduct={id:'pizza2sabores',cat:'pizzas',name:'🍕 PIZZA G — 2 SABORES',price:0,special:'twoFlavors'};
  const detail=document.getElementById('detailContent');if(!detail)return;
- detail.innerHTML='<div class="panel detail pizza2-page">'+'<div class="section pizza-size-box pizza2-size-box"><h3>Tamanho</h3><label class="option pizza2-radio"><input type="radio" name="pizzaSize2" value="P" onchange="updateTwoFlavorTotal()"> Pizza P</label><label class="option pizza2-radio"><input type="radio" name="pizzaSize2" value="G" onchange="updateTwoFlavorTotal()"> Pizza G</label></div>'+'<div class="pizza2-top"><div class="pizza2-kicker">🍕 PIZZA G • PERSONALIZE DO SEU JEITO</div><div class="pizza2-title-row"><div class="pizza2-icon">🍕</div><div><h2>Monte sua Pizza P ou G</h2><p>Escolha <b>1 sabor para cada metade</b> e crie sua combinação.</p></div></div><div class="pizza2-progress"><span id="pizza2Step1" class="step active"></span><span id="pizza2Step2" class="step"></span></div><div id="pizza2ProgressText" class="pizza2-progress-text">Comece escolhendo o primeiro sabor</div><div class="pizza2-live-preview"><div id="pizza2Preview1" class="pizza2-half-preview"><span class="pizza2-half-tag">◐ METADE 1</span><div class="pizza2-half-name">Escolha um sabor</div><div class="pizza2-half-cat">Aguardando seleção</div><span class="pizza2-half-icon">🍕</span></div><div id="pizza2Preview2" class="pizza2-half-preview"><span class="pizza2-half-tag">◑ METADE 2</span><div class="pizza2-half-name">Escolha um sabor</div><div class="pizza2-half-cat">Aguardando seleção</div><span class="pizza2-half-icon">🍕</span></div></div></div>'+ 
+ detail.innerHTML='<div class="panel detail pizza2-page">'+'<div class="section pizza-size-box pizza2-size-box"><h3>Tamanho</h3><label class="option pizza2-radio"><input type="radio" name="pizzaSize2" value="P" onchange="updateTwoFlavorTotal()"> Pizza P</label><label class="option pizza2-radio"><input type="radio" name="pizzaSize2" value="G" onchange="updateTwoFlavorTotal()"> Pizza G</label></div>'+'<div class="pizza2-top"><div class="pizza2-kicker">🍕 PERSONALIZE DO SEU JEITO</div><div class="pizza2-title-row"><div class="pizza2-icon">🍕</div><div><h2>Monte sua Pizza P ou G</h2><p>Escolha <b>1 sabor para cada metade</b> e crie sua combinação.</p></div></div><div class="pizza2-progress"><span id="pizza2Step1" class="step active"></span><span id="pizza2Step2" class="step"></span></div><div id="pizza2ProgressText" class="pizza2-progress-text">Comece escolhendo o primeiro sabor</div><div class="pizza2-live-preview"><div id="pizza2Preview1" class="pizza2-half-preview"><span class="pizza2-half-tag">◐ METADE 1</span><div class="pizza2-half-name">Escolha um sabor</div><div class="pizza2-half-cat">Aguardando seleção</div><span class="pizza2-half-icon">🍕</span></div><div id="pizza2Preview2" class="pizza2-half-preview"><span class="pizza2-half-tag">◑ METADE 2</span><div class="pizza2-half-name">Escolha um sabor</div><div class="pizza2-half-cat">Aguardando seleção</div><span class="pizza2-half-icon">🍕</span></div></div></div>'+ 
  '<div id="pizza2Choice1" class="pizza2-choice"><div class="pizza2-choice-head"><div class="pizza2-number">1</div><div><h3>Primeira metade</h3><small>Escolha a categoria e depois o sabor</small></div><span class="pizza2-done">✓ OK</span></div><label class="pizza2-field-label">1. Categoria</label><div class="pizza2-select-wrap"><select id="pizzaCat1" class="pizza2-select">'+cats+'</select></div><label class="pizza2-field-label">2. Sabor</label><div class="pizza2-select-wrap"><select id="pizzaFlavor1" class="pizza2-select" disabled><option value="">Escolha a categoria primeiro</option></select></div><div id="pizzaSelected1" class="pizza2-selected"><span class="check">○</span><span>Nenhum sabor escolhido</span></div></div><div class="pizza2-plus"><span>+</span></div>'+ 
  '<div id="pizza2Choice2" class="pizza2-choice"><div class="pizza2-choice-head"><div class="pizza2-number">2</div><div><h3>Segunda metade</h3><small>Escolha um sabor diferente</small></div><span class="pizza2-done">✓ OK</span></div><label class="pizza2-field-label">1. Categoria</label><div class="pizza2-select-wrap"><select id="pizzaCat2" class="pizza2-select">'+cats+'</select></div><label class="pizza2-field-label">2. Sabor</label><div class="pizza2-select-wrap"><select id="pizzaFlavor2" class="pizza2-select" disabled><option value="">Escolha a categoria primeiro</option></select></div><div id="pizzaSelected2" class="pizza2-selected"><span class="check">○</span><span>Nenhum sabor escolhido</span></div></div>'+ 
  '<div class="pizza2-lock">🔒 <span><b>Combinação inteligente:</b> o sistema evita automaticamente repetir o mesmo sabor nas duas metades.</span></div><div class="pizza2-tip"><span>💡</span><span><strong>Dica:</strong> você pode misturar categorias. O mesmo sabor não pode ser escolhido nas duas metades.</span></div><div class="pizza2-border"><div class="pizza2-section-title"><h3>🍕 Escolha a borda</h3><span>OPCIONAL</span></div><label class="option pizza2-radio"><input type="radio" name="pizzaBorda2" value="0" checked onchange="toggleBordaRecheio2();updateTwoFlavorTotal()"> Sem borda <strong style="margin-left:auto">R$ 0,00</strong></label><label class="option pizza2-radio"><input type="radio" name="pizzaBorda2" value="10" onchange="toggleBordaRecheio2();updateTwoFlavorTotal()"> Borda recheada <strong style="margin-left:auto;color:#ffb74d">+ R$ 10,00</strong></label><div id="bordaRecheio2" class="pizza2-fillings" style="display:none"><label class="option pizza2-radio"><input type="radio" name="bordaRecheio2" value="CHEDDAR" onchange="updateTwoFlavorTotal()"> 🧀 Cheddar</label><label class="option pizza2-radio"><input type="radio" name="bordaRecheio2" value="CHOCOLATE" onchange="updateTwoFlavorTotal()"> 🍫 Chocolate</label><label class="option pizza2-radio"><input type="radio" name="bordaRecheio2" value="CATUPIRY" onchange="updateTwoFlavorTotal()"> 🧀 Catupiry</label></div></div><div id="twoFlavorTotal" class="summary pizza2-total"><div class="row"><span>Pizza G • 2 sabores</span><strong>R$ 0,00</strong></div><div class="row"><span>Borda</span><strong>R$ 0,00</strong></div><div class="total row"><span>TOTAL</span><strong>R$ 0,00</strong></div></div><div class="section pizza2-note"><h3>📝 Observação</h3><textarea id="pizza2Note" rows="3" aria-label="Observação da pizza de dois sabores" placeholder="Alguma observação para esta pizza?"></textarea></div><button class="btn pizza2-add" onclick="addPizzaTwoFlavors()">🍕 ADICIONAR PIZZA AO CARRINHO</button></div>';
@@ -9257,7 +9324,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharAvisoS
 <div id="barukiAvisoImagemRemoto" role="dialog" aria-modal="true" aria-label="Aviso da Lanchonete Baruki">
   <div class="baruki-aviso-imagem-conteudo">
     <button id="barukiAvisoImagemFechar" class="baruki-aviso-imagem-fechar" type="button" aria-label="Fechar aviso">×</button>
-    <img id="barukiAvisoImagem" class="baruki-aviso-imagem" alt="Aviso da Lanchonete Baruki">
+    <img id="barukiAvisoImagem" class="baruki-aviso-imagem" alt="Aviso da Lanchonete Baruki" loading="lazy" decoding="async">
   </div>
 </div>
 <script id="baruki-aviso-imagem-independente-script">
@@ -9383,7 +9450,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharAvisoS
 <div id="barukiSegundoAvisoImagemRemoto" role="dialog" aria-modal="true" aria-label="Segundo aviso da Lanchonete Baruki">
   <div class="baruki-segundo-aviso-conteudo">
     <button id="barukiSegundoAvisoFechar" class="baruki-segundo-aviso-fechar" type="button" aria-label="Fechar segundo aviso">×</button>
-    <img id="barukiSegundoAvisoImagem" class="baruki-segundo-aviso-imagem" alt="Segundo aviso da Lanchonete Baruki">
+    <img id="barukiSegundoAvisoImagem" class="baruki-segundo-aviso-imagem" alt="Segundo aviso da Lanchonete Baruki" loading="lazy" decoding="async">
   </div>
 </div>
 <script id="baruki-segundo-aviso-imagem-script">
@@ -9599,7 +9666,7 @@ body.baruki-rodape-ativo .toast{bottom:calc(145px + var(--baruki-rodape-h))}
 @media(prefers-reduced-motion:reduce){#barukiRodapeBanner,nav.bottom,#barukiRodapeEspaco{transition:none}}
 </style>
 <div id="barukiRodapeEspaco" aria-hidden="true"></div>
-<div id="barukiRodapeBanner" aria-hidden="true"><img id="barukiRodapeBannerImg" alt="" decoding="async"></div>
+<div id="barukiRodapeBanner" aria-hidden="true"><img id="barukiRodapeBannerImg" alt="" decoding="async" loading="lazy"></div>
 <script id="baruki-rodape-banner-script">
 /* Banner de rodapé: aparece automaticamente quando a loja está aberta (mesmo horário/status do cabeçalho),
    só se houver imagem no link. Ao entrar, aparece por 10 segundos e depois some. */
@@ -13004,6 +13071,262 @@ html body #categories .cat.active .category-label{color:#fff !important;}
 /* Sem contorno laranja em volta do ícone da categoria selecionada */
 html body #categories .cat .category-image,
 html body #categories .cat.active .category-image{outline:none !important;border:none !important;}
+</style>
+
+<style id="baruki-pizza2-melhorias-final">
+/* 1) Remove a linha "Pizza G • 2 sabores" do resumo (a 1ª linha do bloco de total). Borda e TOTAL continuam. */
+html body #detailContent #twoFlavorTotal > .row:first-child{display:none!important}
+
+/* 2) Seletor de tamanho P / G: cartões grandes, seleção laranja clara e sem o radio nativo */
+html body #detailContent .pizza2-page .pizza2-size-box{
+  display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;
+  padding:14px!important;margin:0 0 12px!important;border-radius:20px!important;
+  background:linear-gradient(180deg,rgba(255,152,0,.12),rgba(255,152,0,.03))!important;
+  border:1px solid rgba(255,152,0,.35)!important;box-shadow:0 8px 22px rgba(0,0,0,.28)!important;
+}
+html body #detailContent .pizza2-page .pizza2-size-box h3{
+  grid-column:1 / -1!important;margin:0 0 4px!important;font-size:14px!important;font-weight:800!important;
+  letter-spacing:.8px!important;text-transform:uppercase!important;color:#ffb74d!important;
+}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio{
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+  gap:4px!important;min-height:86px!important;margin:0!important;padding:12px 8px!important;border-radius:16px!important;
+  border:2px solid rgba(255,152,0,.28)!important;background:rgba(10,8,5,.55)!important;color:#f3e3cf!important;
+  font-size:19px!important;font-weight:900!important;cursor:pointer!important;text-align:center!important;
+  box-shadow:none!important;opacity:1!important;transition:transform .15s ease,box-shadow .15s ease,background .15s ease!important;
+}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:active{transform:scale(.97)!important}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio input[type="radio"]{
+  position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;margin:0!important;pointer-events:none!important;
+}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio::before{
+  content:'🍕';display:block;font-size:18px;line-height:1;
+}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:first-of-type::before{font-size:18px}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:last-of-type::before{font-size:26px}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input:checked){
+  background:linear-gradient(180deg,#ffb74d 0%,#ff9800 100%)!important;border-color:#ffcc80!important;
+  color:#1a1005!important;box-shadow:0 6px 18px rgba(255,152,0,.45)!important;
+}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input:checked) strong{color:#1a1005!important}
+
+/* 3) Descrição do topo: cabeçalho mais limpo, progresso visível e prévia das metades */
+html body #detailContent .pizza2-page .pizza2-top{
+  padding:16px!important;border-radius:20px!important;margin:0 0 12px!important;
+  border:1px solid rgba(255,152,0,.35)!important;
+  background:linear-gradient(135deg,rgba(255,152,0,.20),rgba(255,87,34,.06) 60%,rgba(0,0,0,0))!important;
+}
+html body #detailContent .pizza2-page .pizza2-kicker{
+  display:inline-flex!important;align-items:center!important;gap:6px!important;padding:5px 12px!important;
+  border-radius:999px!important;background:rgba(255,152,0,.16)!important;border:1px solid rgba(255,152,0,.45)!important;
+  color:#ffb74d!important;font-size:12px!important;font-weight:800!important;letter-spacing:.6px!important;margin-bottom:12px!important;
+}
+html body #detailContent .pizza2-page .pizza2-title-row{gap:12px!important;align-items:center!important;}
+html body #detailContent .pizza2-page .pizza2-title-row h2{font-size:24px!important;line-height:1.15!important;margin:0 0 4px!important;}
+html body #detailContent .pizza2-page .pizza2-title-row p{font-size:14px!important;line-height:1.45!important;margin:0!important;}
+html body #detailContent .pizza2-page .pizza2-progress{
+  display:flex!important;gap:6px!important;height:8px!important;margin:14px 0 8px!important;
+  border-radius:999px!important;background:rgba(255,255,255,.08)!important;
+}
+html body #detailContent .pizza2-page .pizza2-progress .step{flex:1 1 0!important;height:100%!important;border-radius:999px!important;background:transparent!important;}
+html body #detailContent .pizza2-page .pizza2-progress .step.active{background:linear-gradient(90deg,#ffb74d,#ff9800)!important;}
+html body #detailContent .pizza2-page .pizza2-progress-text{font-size:13px!important;font-weight:700!important;color:#ffcc80!important;margin:0 0 12px!important;}
+html body #detailContent .pizza2-page .pizza2-live-preview{gap:10px!important;}
+html body #detailContent .pizza2-page .pizza2-half-preview{
+  border-radius:16px!important;padding:12px!important;min-height:96px!important;
+  border:1px solid rgba(255,152,0,.30)!important;background:rgba(10,8,5,.45)!important;
+}
+html body #detailContent .pizza2-page .pizza2-half-tag{font-size:12px!important;font-weight:800!important;letter-spacing:.5px!important;color:#ffb74d!important;}
+html body #detailContent .pizza2-page .pizza2-half-name{font-size:16px!important;font-weight:800!important;margin:6px 0 2px!important;}
+
+/* 4) Modo claro */
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box{background:#fff7ec!important;border-color:rgba(255,152,0,.45)!important;box-shadow:0 6px 16px rgba(0,0,0,.08)!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio{background:#ffffff!important;color:#6b4f2a!important;border-color:rgba(255,152,0,.35)!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio:has(input:checked){color:#1a1005!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-top{background:linear-gradient(135deg,#fff3e0,#ffe0b2 70%,#ffffff)!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-progress{background:rgba(0,0,0,.08)!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-progress-text{color:#b26a00!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-half-preview{background:#ffffff!important;}
+</style>
+<style id="pizza2-cores-only">
+/* SOMENTE CORES — tela Pizza de 2 Sabores (tamanho, fonte, layout e lógica inalterados) */
+
+/* ===== MODO ESCURO: vinho/tomate + queijo dourado + manjericão ===== */
+html body #detailContent .pizza2-page .pizza2-top{background:radial-gradient(circle at 88% 12%,rgba(255,236,179,.35) 0,rgba(255,236,179,0) 42%),linear-gradient(135deg,#8e0f0f 0%,#d32f2f 48%,#e65100 100%)!important;border-color:#ffca28!important;box-shadow:0 16px 36px rgba(183,28,28,.40)!important;}
+html body #detailContent .pizza2-page .pizza2-top:after{background:rgba(255,202,40,.35)!important;}
+html body #detailContent .pizza2-page .pizza2-kicker{color:#ffe082!important;}
+html body #detailContent .pizza2-page .pizza2-title-row h2{color:#fffdf5!important;}
+html body #detailContent .pizza2-page .pizza2-title-row p{color:#ffe9c7!important;}
+html body #detailContent .pizza2-page .pizza2-icon{background:linear-gradient(145deg,#ffe082,#ffa000)!important;box-shadow:0 9px 22px rgba(0,0,0,.30)!important;}
+html body #detailContent .pizza2-page .pizza2-progress{background:rgba(255,255,255,.20)!important;}
+html body #detailContent .pizza2-page .pizza2-progress .step.active{background:linear-gradient(90deg,#ffe082,#ffca28)!important;}
+html body #detailContent .pizza2-page .pizza2-progress-text{color:#fff3e0!important;}
+
+html body #detailContent .pizza2-page .pizza2-half-preview{color:#fffdf5!important;}
+html body #detailContent .pizza2-page #pizza2Preview1{background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.12) 0,transparent 45%),linear-gradient(145deg,#c62828,#7f0000)!important;border-color:#ef9a9a!important;}
+html body #detailContent .pizza2-page #pizza2Preview2{background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.12) 0,transparent 45%),linear-gradient(145deg,#2e7d32,#14401a)!important;border-color:#a5d6a7!important;}
+html body #detailContent .pizza2-page .pizza2-half-preview.filled{border-color:#ffe082!important;}
+html body #detailContent .pizza2-page .pizza2-half-tag{color:#ffe082!important;}
+html body #detailContent .pizza2-page .pizza2-half-name{color:#fffdf5!important;}
+html body #detailContent .pizza2-page .pizza2-half-cat{color:#ffe9c7!important;}
+html body #detailContent .pizza2-page .pizza2-half-icon{opacity:.4!important;}
+
+html body #detailContent .pizza2-page .pizza2-size-box{background:linear-gradient(145deg,#3a0f0f,#22080a)!important;border-color:#e65100!important;}
+html body #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio{color:#ffe9c7!important;}
+html body #detailContent .pizza2-page .pizza2-choice{background:linear-gradient(145deg,#33150f,#1e0c08)!important;border-color:#6d2c1a!important;}
+html body #detailContent .pizza2-page .pizza2-choice.selected{border-color:#ffca28!important;box-shadow:0 10px 28px rgba(255,202,40,.20)!important;}
+html body #detailContent .pizza2-page .pizza2-choice-head h3{color:#ffe9c7!important;}
+html body #detailContent .pizza2-page .pizza2-choice-head small{color:#ffb74d!important;}
+html body #detailContent .pizza2-page .pizza2-number{background:#4a1d10!important;border-color:#e65100!important;color:#ffcc80!important;}
+html body #detailContent .pizza2-page .pizza2-choice.selected .pizza2-number{background:linear-gradient(145deg,#ffe082,#ffa000)!important;border-color:#ffe082!important;color:#3e1600!important;}
+html body #detailContent .pizza2-page .pizza2-done{background:rgba(102,187,106,.25)!important;border-color:#81c784!important;color:#e8f5e9!important;}
+html body #detailContent .pizza2-page .pizza2-field-label{color:#ffb74d!important;}
+html body #detailContent .pizza2-page .pizza2-select{background:#2a120c!important;border-color:#8d3a1f!important;color:#fffdf5!important;}
+html body #detailContent .pizza2-page .pizza2-select:focus{border-color:#ffca28!important;box-shadow:0 0 0 3px rgba(255,202,40,.22)!important;}
+html body #detailContent .pizza2-page .pizza2-select:disabled{background:#1a0d09!important;color:#8d6e63!important;}
+html body #detailContent .pizza2-page .pizza2-select-wrap:after{color:#ffca28!important;}
+html body #detailContent .pizza2-page .pizza2-selected{background:#2a120c!important;border-color:#8d3a1f!important;color:#ffb74d!important;}
+html body #detailContent .pizza2-page .pizza2-selected.has-value{background:linear-gradient(90deg,rgba(67,160,71,.35),rgba(67,160,71,.12))!important;border-color:#66bb6a!important;color:#f1f8e9!important;}
+html body #detailContent .pizza2-page .pizza2-selected .check{background:#4a1d10!important;color:#ffb74d!important;}
+html body #detailContent .pizza2-page .pizza2-selected.has-value .check{background:#43a047!important;color:#ffffff!important;}
+html body #detailContent .pizza2-page .pizza2-plus{color:#ffca28!important;}
+html body #detailContent .pizza2-page .pizza2-plus:before,
+html body #detailContent .pizza2-page .pizza2-plus:after{background:linear-gradient(90deg,transparent,rgba(255,202,40,.65))!important;}
+html body #detailContent .pizza2-page .pizza2-lock{background:rgba(255,202,40,.12)!important;color:#ffe9c7!important;}
+html body #detailContent .pizza2-page .pizza2-lock b{color:#ffca28!important;}
+html body #detailContent .pizza2-page .pizza2-tip{background:rgba(229,57,53,.16)!important;border-color:#e53935!important;color:#ffe9c7!important;}
+html body #detailContent .pizza2-page .pizza2-tip strong{color:#fffdf5!important;}
+html body #detailContent .pizza2-page .pizza2-section-title h3{color:#ffe9c7!important;}
+html body #detailContent .pizza2-page .pizza2-section-title span{color:#ffca28!important;}
+html body #detailContent .pizza2-page .pizza2-border{background:linear-gradient(145deg,#33150f,#1e0c08)!important;border-color:#6d2c1a!important;}
+html body #detailContent .pizza2-page .pizza2-radio{background:#3d1a10!important;border-color:#6d2c1a!important;color:#ffe9c7!important;}
+html body #detailContent .pizza2-page .pizza2-radio:has(input:checked){background:linear-gradient(90deg,rgba(255,202,40,.40),rgba(229,57,53,.22))!important;border-color:#ffca28!important;color:#fffdf5!important;}
+html body #detailContent .pizza2-page .pizza2-radio input{accent-color:#ffca28!important;}
+html body #detailContent .pizza2-page .pizza2-fillings{background:#2a120c!important;border-color:#6d2c1a!important;}
+html body #detailContent .pizza2-page .pizza2-fillings .pizza2-radio{background:#3d1a10!important;}
+html body #detailContent .pizza2-page .pizza2-total{background:linear-gradient(145deg,#4a1a10,#24100a)!important;border-color:#ffca28!important;}
+html body #detailContent .pizza2-page .pizza2-total .row{color:#ffe9c7!important;}
+html body #detailContent .pizza2-page .pizza2-total .row strong{color:#fffdf5!important;}
+html body #detailContent .pizza2-page .pizza2-total .total{color:#fffdf5!important;}
+html body #detailContent .pizza2-page .pizza2-total .total strong{color:#a5d6a7!important;}
+html body #detailContent .pizza2-page .pizza2-note textarea{background:#2a120c!important;color:#fffdf5!important;border-color:#6d2c1a!important;}
+html body #detailContent .pizza2-page .pizza2-add{background:linear-gradient(135deg,#c62828 0%,#e65100 55%,#ffb300 100%)!important;color:#ffffff!important;box-shadow:0 12px 28px rgba(198,40,40,.45)!important;}
+
+/* ===== MODO CLARO: creme de massa + tomate + manjericão ===== */
+html body.day-theme #detailContent .pizza2-page .pizza2-top{background:radial-gradient(circle at 90% 10%,rgba(255,255,255,.30) 0,transparent 40%),linear-gradient(135deg,#c62828 0%,#f4511e 55%,#ffb300 100%)!important;border-color:#ffb300!important;box-shadow:0 16px 32px rgba(198,40,40,.28)!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-kicker{color:#fff8e1!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-title-row h2{color:#ffffff!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-title-row p{color:#fff8e1!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-progress{background:rgba(255,255,255,.50)!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-progress .step.active{background:linear-gradient(90deg,#ffffff,#fff59d)!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-progress-text{color:#ffffff!important;}
+html body.day-theme #detailContent .pizza2-page #pizza2Preview1{background:linear-gradient(145deg,#ffebee,#ffcdd2)!important;border-color:#e53935!important;}
+html body.day-theme #detailContent .pizza2-page #pizza2Preview2{background:linear-gradient(145deg,#e8f5e9,#c8e6c9)!important;border-color:#43a047!important;}
+html body.day-theme #detailContent .pizza2-page #pizza2Preview1 .pizza2-half-tag{color:#c62828!important;}
+html body.day-theme #detailContent .pizza2-page #pizza2Preview2 .pizza2-half-tag{color:#2e7d32!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-half-name{color:#3e1a00!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-half-cat{color:#6d4c41!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box{background:linear-gradient(145deg,#fff8e1,#ffe0b2)!important;border-color:#ffb300!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-size-box label.option.pizza2-radio{background:#ffffff!important;color:#5d4037!important;border-color:#ffcc80!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-choice{background:linear-gradient(145deg,#ffffff,#fff8f0)!important;border-color:#ffd8a8!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-choice.selected{border-color:#f4511e!important;box-shadow:0 10px 26px rgba(244,81,30,.20)!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-choice-head h3{color:#3e2723!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-choice-head small{color:#8d6e63!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-number{background:#fff3e0!important;border-color:#ffb74d!important;color:#e65100!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-choice.selected .pizza2-number{background:linear-gradient(145deg,#ff7043,#d84315)!important;border-color:#d84315!important;color:#ffffff!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-done{background:#e8f5e9!important;border-color:#66bb6a!important;color:#1b5e20!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-field-label{color:#8d4a00!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-select{background:#fffdf5!important;border-color:#ffb74d!important;color:#3e2723!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-select:focus{border-color:#f4511e!important;box-shadow:0 0 0 3px rgba(244,81,30,.16)!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-select:disabled{background:#f5f5f5!important;color:#9e9e9e!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-select-wrap:after{color:#e65100!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-selected{background:#fffdf5!important;border-color:#ffcc80!important;color:#8d6e63!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-selected.has-value{background:#e8f5e9!important;border-color:#66bb6a!important;color:#1b5e20!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-selected .check{background:#ffe0b2!important;color:#e65100!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-selected.has-value .check{background:#43a047!important;color:#ffffff!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-plus{color:#e65100!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-plus:before,
+html body.day-theme #detailContent .pizza2-page .pizza2-plus:after{background:linear-gradient(90deg,transparent,rgba(230,81,0,.45))!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-lock{background:#fff3e0!important;color:#6d4c41!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-lock b{color:#e65100!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-tip{background:#fff8e1!important;border-color:#ffb74d!important;color:#5d4037!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-tip strong{color:#3e2723!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-section-title h3{color:#3e2723!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-section-title span{color:#e65100!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-border{background:linear-gradient(145deg,#ffffff,#fff8f0)!important;border-color:#ffd8a8!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-radio{background:#ffffff!important;border-color:#ffcc80!important;color:#5d4037!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-radio:has(input:checked){background:linear-gradient(90deg,#fff3e0,#ffe0b2)!important;border-color:#f4511e!important;color:#3e1a00!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-radio input{accent-color:#f4511e!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-fillings{background:#fff8e1!important;border-color:#ffcc80!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-fillings .pizza2-radio{background:#ffffff!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-total{background:linear-gradient(145deg,#fff8e1,#ffe0b2)!important;border-color:#ffb300!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-total .row{color:#6d4c41!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-total .row strong{color:#3e2723!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-total .total{color:#3e2723!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-total .total strong{color:#2e7d32!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-note textarea{background:#fffdf5!important;color:#3e2723!important;border-color:#ffcc80!important;}
+html body.day-theme #detailContent .pizza2-page .pizza2-add{background:linear-gradient(135deg,#c62828 0%,#f4511e 55%,#ffb300 100%)!important;color:#ffffff!important;box-shadow:0 12px 26px rgba(198,40,40,.32)!important;}
+</style>
+
+
+<style id="baruki-status-canto-direito">
+/* Cabeçalho: logo à esquerda; à direita, caixa com horário + status (LOJA FECHADA/ABERTA). */
+html body .header{justify-content:space-between!important;gap:8px!important;padding:8px 10px 6px!important;min-height:0!important}
+html body .header .brand{flex:0 0 auto!important;max-width:none!important;min-width:0!important;font-size:15px!important;line-height:.95!important;white-space:nowrap!important}
+html body .header .brand span{font-size:1.3em!important}
+html body .header .status{
+  position:relative!important;display:flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:flex-end!important;flex-wrap:nowrap!important;
+  width:max-content!important;max-width:none!important;min-width:0!important;
+  flex:0 0 auto!important;margin:0 0 0 auto!important;padding:7px 9px!important;gap:9px!important;
+  border-radius:14px!important;text-align:left!important;
+}
+html body .header .store-hours.baruki-hours-esq{
+  position:static!important;display:block!important;flex:0 0 auto!important;width:auto!important;
+  margin:0!important;padding:0 11px 0 2px!important;border-right:1px solid rgba(255,255,255,.22)!important;
+  font-size:10.5px!important;font-weight:800!important;line-height:1.25!important;letter-spacing:.2px!important;
+  color:#fff!important;text-align:left!important;white-space:nowrap!important;opacity:1!important;visibility:visible!important;
+}
+html body .header .status-line{flex:0 0 auto!important;width:auto!important;margin:0!important;justify-content:flex-end!important;gap:9px!important;min-width:0!important}
+html body .header .status-line .dot{width:13px!important;height:13px!important;flex:0 0 auto!important}
+html body .header .status-line #statusText{font-size:14px!important;padding:7px 12px!important;white-space:nowrap!important;letter-spacing:.2px!important}
+@media(max-width:420px){
+  html body .header{padding:8px 8px 6px!important;gap:6px!important}
+  html body .header .brand{font-size:14px!important}
+  html body .header .status{padding:6px 5px!important;gap:6px!important}
+  html body .header .store-hours.baruki-hours-esq{font-size:10px!important;padding:0 6px 0 2px!important}
+  html body .header .status-line{gap:7px!important}
+  html body .header .status-line .dot{width:11px!important;height:11px!important}
+  html body .header .status-line #statusText{font-size:13px!important;padding:5px 7px!important}
+}
+</style>
+<style id="baruki-dot-aberta-igual-fechada">
+/* Bolinha redonda e do mesmo tamanho nos dois estados. Loja aberta: mesmo pulso e mesma onda da loja fechada, na cor verde. */
+html body .header .status-line #statusDot{
+  display:inline-block!important;position:relative!important;
+  width:13px!important;height:13px!important;min-width:13px!important;max-width:13px!important;
+  flex:0 0 13px!important;margin:0!important;border-radius:50%!important;aspect-ratio:1/1!important;
+}
+html body .header .status-line #statusDot:not(.closed){
+  background:var(--green,#00c853)!important;color:var(--green,#00c853)!important;
+  box-shadow:0 0 9px var(--green,#00c853)!important;
+  animation:barukiOpenDotPulse 2.8s ease-in-out infinite!important;
+}
+html body .header .status-line #statusDot:not(.closed)::before{
+  content:""!important;display:block!important;position:absolute!important;inset:-5px!important;
+  border-radius:50%!important;border:2px solid currentColor!important;opacity:.7;pointer-events:none;
+  animation:barukiOpenDotWave 2.8s ease-out infinite!important;
+}
+html body .header .status-line #statusDot:not(.closed)::after{display:none!important}
+@keyframes barukiOpenDotPulse{
+  0%,100%{transform:scale(1);opacity:.9;box-shadow:0 0 9px var(--green,#00c853)}
+  50%{transform:scale(1.22);opacity:1;box-shadow:0 0 18px var(--green,#00c853)}
+}
+@keyframes barukiOpenDotWave{
+  0%{transform:scale(.7);opacity:.7}
+  75%,100%{transform:scale(2.8);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){html body .header .status-line #statusDot:not(.closed),html body .header .status-line #statusDot:not(.closed)::before{animation:none!important}}
 </style>
 </body>
 </html>
