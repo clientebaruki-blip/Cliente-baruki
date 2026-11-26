@@ -13444,5 +13444,59 @@ html body .pizza2-page:not(#_) .pizza2-note textarea::placeholder{color:var(--p2
 html body .pizza2-page:not(#_) .pizza2-add{background:linear-gradient(90deg,var(--p2-accent),var(--p2-accent2))!important;color:#fff!important;box-shadow:0 12px 26px rgba(255,122,0,.35)!important;border:0!important}
 </style>
 
+
+<!-- ===== Atalho Android (aparece uma única vez) ===== -->
+<style>
+#atalhoApp{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:2147482500;display:none;background:#1e1e1e;color:#fff;border:1px solid #ff9800;border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.5);font-family:system-ui,-apple-system,Roboto,Arial,sans-serif}
+#atalhoApp .at-t{font-weight:700;font-size:15px;margin:0 0 4px}
+#atalhoApp .at-d{font-size:13px;line-height:1.4;margin:0 0 12px;opacity:.85}
+#atalhoApp .at-b{display:flex;gap:8px}
+#atalhoApp button{flex:1;border:0;border-radius:10px;padding:11px;font-size:14px;font-weight:700;cursor:pointer}
+#atalhoApp .at-ok{background:#ff9800;color:#1a1a1a}
+#atalhoApp .at-no{background:#333;color:#fff}
+</style>
+<div id="atalhoApp" role="dialog" aria-label="Instalar atalho">
+  <p class="at-t">📲 Instalar atalho do cardápio</p>
+  <p class="at-d" id="atalhoTxt">Adicione à tela inicial para abrir mais rápido.</p>
+  <div class="at-b">
+    <button type="button" class="at-no" id="atalhoNao">Agora não</button>
+    <button type="button" class="at-ok" id="atalhoSim">Instalar</button>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY='atalho_android_visto_v1', ev=null, box, txt, sim, nao;
+  function visto(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
+  function marcar(){try{localStorage.setItem(KEY,'1')}catch(e){}}
+  function fechar(){marcar();if(box)box.style.display='none'}
+  function jaInstalado(){
+    return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;
+  }
+  if(!/Android/i.test(navigator.userAgent)||visto()||jaInstalado())return;
+
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();ev=e;});
+  window.addEventListener('appinstalled',function(){marcar();if(box)box.style.display='none'});
+
+  function iniciar(){
+    box=document.getElementById('atalhoApp');txt=document.getElementById('atalhoTxt');
+    sim=document.getElementById('atalhoSim');nao=document.getElementById('atalhoNao');
+    if(!box)return;
+    nao.onclick=fechar;
+    sim.onclick=function(){
+      if(ev){
+        ev.prompt();
+        ev.userChoice.then(function(){ev=null;fechar();},function(){fechar();});
+      }else{
+        txt.innerHTML='Toque no menu <b>⋮</b> do Chrome e escolha <b>"Adicionar à tela inicial"</b>.';
+        sim.style.display='none';nao.textContent='Entendi';
+      }
+    };
+    setTimeout(function(){if(!visto()&&!jaInstalado())box.style.display='block';},4000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar);else iniciar();
+})();
+</script>
+<!-- ===== Fim Atalho Android ===== -->
+
 </body>
 </html>
