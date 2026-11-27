@@ -134,6 +134,27 @@ textarea:focus,input:focus{border-color:var(--orange)}
 .pix-copy{width:100%;border:0;border-radius:9px;padding:9px 11px;background:#242424;color:#fff;font-weight:900;font-size:12px;text-align:left}
 .pix-copy span{float:right;color:var(--green);font-weight:900}
 .pix-note{margin-top:8px;color:#aaa;font-size:11px;line-height:1.45}
+/* Efeito animado ao copiar o PIX */
+.pix-copy.copied,.pix-button.copied{background:#16a34a!important;color:#fff!important;border-color:#16a34a!important;animation:pixBtnPop .55s cubic-bezier(.2,1.5,.4,1),pixBtnGlow 1.2s ease-out}
+.pix-copy.copied span{display:none}
+@keyframes pixBtnPop{0%{transform:scale(.9)}55%{transform:scale(1.07)}100%{transform:scale(1)}}
+@keyframes pixBtnGlow{0%{box-shadow:0 0 0 0 rgba(34,197,94,.7)}100%{box-shadow:0 0 0 18px rgba(34,197,94,0)}}
+.pix-done{display:none;margin-top:14px;padding:14px 12px;border-radius:14px;background:rgba(22,163,74,.14);border:1px solid rgba(34,197,94,.55);text-align:center}
+.pix-done.show{display:block;animation:pixDoneIn .45s cubic-bezier(.2,1.3,.4,1)}
+@keyframes pixDoneIn{from{opacity:0;transform:translateY(10px) scale(.92)}to{opacity:1;transform:none}}
+.pix-done-check{width:54px;height:54px;display:block;margin:0 auto 6px}
+.pix-done-check circle{fill:#16a34a;transform-origin:center;transform:scale(0)}
+.pix-done-check path{fill:none;stroke:#fff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40}
+.pix-done.show .pix-done-check circle{animation:pixCheckCircle .4s .05s cubic-bezier(.2,1.4,.4,1) forwards}
+.pix-done.show .pix-done-check path{animation:pixCheckDraw .35s .4s ease-out forwards}
+@keyframes pixCheckCircle{to{transform:scale(1)}}
+@keyframes pixCheckDraw{to{stroke-dashoffset:0}}
+.pix-done-title{display:block;color:#4ade80;font-size:19px;font-weight:900;letter-spacing:.3px}
+.pix-done-alert{display:block;margin-top:8px;color:#fff;font-size:14px;font-weight:800;line-height:1.45;animation:pixAlertBlink 1s ease-in-out 3}
+@keyframes pixAlertBlink{0%,100%{opacity:1}50%{opacity:.45}}
+.pix-spark{position:fixed;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:400;opacity:0;animation:pixSpark .9s ease-out forwards}
+@keyframes pixSpark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3)}}
+@media(prefers-reduced-motion:reduce){.pix-copy.copied,.pix-button.copied,.pix-done.show,.pix-done-alert,.pix-spark{animation:none!important}.pix-done-check circle{transform:none}.pix-done-check path{stroke-dashoffset:0}}
 /* NOVO VISUAL — somente CARDÁPIO + CARRINHO */
 .header{
   background:rgba(18,18,18,.96);
@@ -1902,6 +1923,14 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 <style id="baruki-campos-autofill-e-botao">
 /* Botão de enviar pedido: letra branca. */
 .baruki-send-order,.btn.green.baruki-send-order{color:#fff!important;-webkit-text-fill-color:#fff!important}
+/* Efeito animado: brilho passando no botão de enviar pedido. */
+.baruki-send-order{position:relative;overflow:hidden}
+.baruki-send-order::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:sendOrderShine 2.8s ease-in-out infinite}
+@keyframes sendOrderShine{0%,55%{left:-60%}100%{left:130%}}
+.baruki-send-order,.btn.green.baruki-send-order{animation:sendOrderPulse 1.2s ease-in-out infinite!important}
+.baruki-send-order:active{animation:none!important}
+@keyframes sendOrderPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(34,197,94,.65)}50%{transform:scale(1.045);box-shadow:0 0 0 12px rgba(34,197,94,0)}}
+@media(prefers-reduced-motion:reduce){.baruki-send-order::after{animation:none;display:none}.baruki-send-order,.btn.green.baruki-send-order{animation:none!important}}
 /* Campos preenchidos automaticamente pelo navegador: mesma cor dos demais campos (sem o fundo azulado). */
 body:not(.day-theme) input:-webkit-autofill,
 body:not(.day-theme) input:-webkit-autofill:hover,
@@ -3293,6 +3322,11 @@ background:#fff!important;border:1px solid #ead6a3;box-shadow:none;color:#2b2b2b
     <p class="pix-label">CHAVE PIX</p>
     <div class="pix-key" id="pixKeyDisplay">10894692925</div>
     <button type="button" class="btn pix-button" onclick="copyPix()">COPIAR CHAVE PIX</button>
+    <div class="pix-done" id="pixDone" role="status" aria-live="polite">
+      <svg class="pix-done-check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="25"/><path d="M14 27l8 8 16-17"/></svg>
+      <span class="pix-done-title">Pix copiado!</span>
+      <span class="pix-done-alert">🚨 Enviar o comprovante do Pix pra dar início ao pedido 🚨</span>
+    </div>
   </div>
 </div>
 
@@ -5888,9 +5922,67 @@ function openPixPopup(){
 
 function closePixPopup(){
   const popup=document.getElementById('pixPopup');
+  clearTimeout(window.__pixCloseTimer);
+  const done=document.getElementById('pixDone');
+  if(done)done.classList.remove('show');
   if(popup){
     popup.classList.remove('show');
     popup.setAttribute('aria-hidden','true');
+  }
+}
+
+function pixCopiedFx(){
+  const popup=document.getElementById('pixPopup');
+  const popupOpen=!!(popup&&popup.classList.contains('show'));
+  const msg='🚨 Enviar o comprovante do Pix pra dar início ao pedido 🚨';
+
+  /* botões ficam verdes com "PIX COPIADO!" por alguns segundos */
+  document.querySelectorAll('.pix-copy,.pix-button').forEach(btn=>{
+    if(btn.dataset.pixLabel===undefined)btn.dataset.pixLabel=btn.firstChild?btn.firstChild.textContent:'';
+    btn.classList.remove('copied');
+    void btn.offsetWidth;
+    if(btn.firstChild)btn.firstChild.textContent='✓ PIX COPIADO!';
+    btn.classList.add('copied');
+  });
+  clearTimeout(window.__pixBtnTimer);
+  window.__pixBtnTimer=setTimeout(()=>{
+    document.querySelectorAll('.pix-copy,.pix-button').forEach(btn=>{
+      btn.classList.remove('copied');
+      if(btn.firstChild&&btn.dataset.pixLabel)btn.firstChild.textContent=btn.dataset.pixLabel;
+    });
+  },3500);
+
+  /* faíscas saindo do botão */
+  const src=(popupOpen?popup.querySelector('.pix-button'):document.querySelector('.pix-copy'))||document.body;
+  const r=src.getBoundingClientRect();
+  const cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const colors=['#22c55e','#4ade80','#facc15','#ffffff','#86efac'];
+  for(let i=0;i<16;i++){
+    const sp=document.createElement('span');
+    const ang=(Math.PI*2*i/16)+Math.random()*.4;
+    const dist=55+Math.random()*55;
+    sp.className='pix-spark';
+    sp.style.left=cx+'px';
+    sp.style.top=cy+'px';
+    sp.style.background=colors[i%colors.length];
+    sp.style.setProperty('--dx',Math.cos(ang)*dist+'px');
+    sp.style.setProperty('--dy',Math.sin(ang)*dist+'px');
+    document.body.appendChild(sp);
+    setTimeout(()=>sp.remove(),1000);
+  }
+
+  if(popupOpen){
+    /* popup aberto: mostra o aviso animado dentro dele e fecha sozinho */
+    const done=document.getElementById('pixDone');
+    if(done){
+      done.classList.remove('show');
+      void done.offsetWidth;
+      done.classList.add('show');
+    }
+    clearTimeout(window.__pixCloseTimer);
+    window.__pixCloseTimer=setTimeout(closePixPopup,5000);
+  }else{
+    toast('✅ Pix copiado!\n'+msg,8000);
   }
 }
 
@@ -5899,8 +5991,7 @@ function copyPix(){
   const display=document.getElementById('pixKeyDisplay');
   if(display)display.textContent=pix;
   const success=()=>{
-    closePixPopup();
-    toast('PIX copiado com sucesso!\n📲 Enviar o comprovante do PIX após o pedido para dar início ao pedido.',8000);
+    pixCopiedFx();
   };
   const fallback=()=>{
     const area=document.createElement('textarea');
@@ -6092,7 +6183,7 @@ function sendWhatsApp(){
   message+='◆ *💳Pagamento:* '+selectedPayment+'\n';
 
   if(selectedPayment==='PIX'){
-    message+='◆ *IMPORTANTE:* Enviar o comprovante do PIX após o pedido para dar início ao pedido.\n';
+    message+='◆ *IMPORTANTE:* Enviar o comprovante do PIX para dar início ao pedido.\n';
   }
 
   message+='\n◆ *Itens:*\n──────────────\n';
